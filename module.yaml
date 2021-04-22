@@ -1,13 +1,32 @@
-name: ibm-mongodb
+name: ibm-vpc-vsi
 type: terraform
-description: Module to provision Hyper Protect vertual server instance
+description: Module to provision Hyper Protect virtual server instance
 tags:
     - tools
     - infrastructure
     - hpvs
     - saas
 versions:
-- platforms:
-    - kubernetes
-    - ocp3
-    - ocp4
+- platforms: []
+  dependencies:
+    - id: resource_group
+      refs:
+        - source: github.com/cloud-native-toolkit/terraform-ibm-resource-group
+          version: ">= 2.1.0"
+    - id: vpcssh
+      refs:
+        - source: github.com/cloud-native-toolkit/terraform-ibm-vpc-ssh
+          version: ">= 1.0.0"
+  variables:
+    - name: resource_group_name
+      moduleRef:
+        id: resource_group
+        output: name
+    - name: sshPublicKey
+      moduleRef:
+        id: vpcssh
+        output:
+    - name: ibmcloud_api_key
+      scope: global
+    - name: name_prefix
+      scope: global
