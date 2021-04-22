@@ -39,10 +39,15 @@ variable "plan" {
   default     = "entry"
 }
 
-
 variable "sshPublicKey" {
   type        = string
   description = "sshPublicKey that should be applied to the service"  
+}
+
+variable "label" {
+  type        = string
+  description = "The label used to build the resource name along with the name_prefix"
+  default     = "hpvs"
 }
 
 

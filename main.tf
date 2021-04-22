@@ -16,12 +16,13 @@ data "ibm_resource_group" "resource_group" {
 
 locals {
   name_prefix = var.name_prefix != "" ? var.name_prefix : var.resource_group_name
-  name        = var.name != "" ? var.name : "${replace(local.name_prefix, "/[^a-zA-Z0-9_\\-\\.]/", "")}-hpcs"  
+  name        = var.name != "" ? var.name : "${replace(local.name_prefix, "/[^a-zA-Z0-9_\\-\\.]/", "")}-${var.label}"
+  service     = "hpvs"
 }
 
 resource "ibm_resource_instance" "hpvs_instance" {
   name              = local.name
-  service           = "hpvs"
+  service           = local.service
   plan              = var.plan
   location          = var.resource_location
   resource_group_id = data.ibm_resource_group.resource_group.id
@@ -32,9 +33,9 @@ resource "ibm_resource_instance" "hpvs_instance" {
   }
 
   timeouts {
-    create = "15m"
-    update = "15m"
-    delete = "15m"
+    create = "45m"
+    update = "45m"
+    delete = "45m"
   }
 }
 
@@ -44,5 +45,5 @@ data "ibm_resource_instance" "hpvs_instance" {
   name              = local.name
   resource_group_id = data.ibm_resource_group.resource_group.id
   location          = var.resource_location
-  service           = "hpvs"
+  service           = local.service
 }
