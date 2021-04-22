@@ -24,8 +24,3 @@ variable "name_prefix" {
   description = "Prefix name that should be used for the cluster and services. If not provided then resource_group_name will be used"
   default     = ""
 }
-
-variable "sshPublicKey" {
-  type        = string
-  description = "sshPublicKey that should be applied to the service"  
-}

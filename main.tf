@@ -3,6 +3,9 @@ resource null_resource print_names {
   provisioner "local-exec" {
     command = "echo 'Resource group: ${var.resource_group_name}'"
   }
+  provisioner "local-exec" {
+    command = "echo 'Public key: ${var.sshPublicKey}'"
+  }
 }
 
 data "ibm_resource_group" "resource_group" {

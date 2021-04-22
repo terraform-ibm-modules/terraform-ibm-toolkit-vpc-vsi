@@ -35,7 +35,7 @@ variable "name" {
 
 variable "plan" {
   type        = string
-  description = "The type of plan the service instance should run under"
+  description = "The type of plan the service instance should run under (free, entry, small, medium)"
   default     = "entry"
 }
 
