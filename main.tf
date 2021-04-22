@@ -28,8 +28,9 @@ resource "ibm_resource_instance" "hpvs_instance" {
   tags              = var.tags
 
   parameters = {
-      sshPublicKey = var.sshPublicKey
- } 
+    sshPublicKey = var.sshPublicKey
+  }
+
   timeouts {
     create = "15m"
     update = "15m"
