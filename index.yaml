@@ -1,0 +1,50 @@
+id: github.com/cloud-native-toolkit/terraform-ibm-vpc-vsi
+name: ibm-mongodb
+type: terraform
+description: Module to provision Hyper Protect vertual server instance
+tags:
+  - tools
+  - infrastructure
+  - hpvs
+  - saas
+versions:
+  - platforms:
+      - kubernetes
+      - ocp3
+      - ocp4
+    version: v0.0.0
+    variables:
+      - name: ibmcloud_api_key
+        type: string
+        description: The api key for IBM Cloud access
+      - name: resource_group_name
+        type: string
+        description: Resource group where the cluster has been provisioned.
+      - name: resource_location
+        type: string
+        description: Geographic location of the resource (e.g. us-south, us-east)
+        default: dal10
+        optional: true
+      - name: tags
+        type: list(string)
+        description: Tags that should be applied to the service
+        default: []
+        optional: true
+      - name: name_prefix
+        type: string
+        description: The prefix name for the service. If not provided it will default to the resource group name
+        default: ""
+        optional: true
+      - name: name
+        type: string
+        description: The name that should be used for the service, particularly when connecting to an existing service. If not provided then the name will be defaulted to {name prefix}-{service}
+        default: ""
+        optional: true
+      - name: plan
+        type: string
+        description: The type of plan the service instance should run under
+        default: entry
+        optional: true
+      - name: sshPublicKey
+        type: string
+        description: sshPublicKey that should be applied to the service
