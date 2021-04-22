@@ -7,4 +7,5 @@ module "dev_hpvs" {
   name_prefix         = var.name_prefix
   plan                = "entry"
   sshPublicKey        = module.vpcssh.public_key
+  label               = "hpvstest"
 }
