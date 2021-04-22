@@ -6,6 +6,6 @@ module "dev_hpvs" {
   resource_location   = "dal10"
   name_prefix         = var.name_prefix
   plan                = "entry"
-  sshPublicKey        = module.vpcssh.public_key
+  sshPublicKey        = "${module.vpcssh.public_key} test@somewhere"
   label               = "hpvstest"
 }
