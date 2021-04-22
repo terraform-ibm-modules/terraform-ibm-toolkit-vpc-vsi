@@ -5,6 +5,6 @@ module "vpcssh" {
   region              = var.region
   name_prefix         = var.name_prefix
   ibmcloud_api_key    = var.ibmcloud_api_key
-  label               = "test-sshkey"
+  label               = "test-sshkey2"
   rsa_bits            = 4096
 }
