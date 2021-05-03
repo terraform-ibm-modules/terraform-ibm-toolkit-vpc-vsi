@@ -7,4 +7,6 @@ module "vpcssh" {
   ibmcloud_api_key    = var.ibmcloud_api_key
   label               = "sshkey"
   rsa_bits            = 4096
+  public_key          = ""
+  private_key         = ""
 }
