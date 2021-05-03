@@ -1,11 +1,10 @@
 name: ibm-vpc-vsi
 type: terraform
-description: Module to provision Hyper Protect virtual server instance
+description: Module to provision virtual server instance
 tags:
     - tools
     - infrastructure
-    - hpvs
-    - saas
+    - virtual server
 versions:
 - platforms: []
   dependencies:
@@ -13,20 +12,40 @@ versions:
       refs:
         - source: github.com/cloud-native-toolkit/terraform-ibm-resource-group
           version: ">= 2.1.0"
+    - id: vpc
+      refs:
+        - source: github.com/cloud-native-toolkit/terraform-ibm-vpc
+          version: ">= 1.0.0"
+    - id: subnets
+      refs:
+        - source: github.com/cloud-native-toolkit/terraform-ibm-vpc-subnets
+          version: ">= 1.0.0"
     - id: vpcssh
       refs:
         - source: github.com/cloud-native-toolkit/terraform-ibm-vpc-ssh
           version: ">= 1.0.0"
   variables:
-    - name: resource_group_name
+    - name: resource_group_id
       moduleRef:
         id: resource_group
+        output: id
+    - name: vpc_name
+      moduleRef:
+        id: vpc
         output: name
-    - name: sshPublicKey
+    - name: vpc_subnets
+      moduleRef:
+        id: subnets
+        output: subnets
+    - name: vpc_subnet_count
+      moduleRef:
+        id: subnets
+        output: count
+    - name: ssh_key_id
       moduleRef:
         id: vpcssh
-        output:
+        output: id
     - name: ibmcloud_api_key
       scope: global
-    - name: name_prefix
+    - name: region
       scope: global

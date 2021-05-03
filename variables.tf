@@ -1,53 +1,81 @@
+variable "resource_group_id" {
+  type        = string
+  description = "The id of the IBM Cloud resource group where the VPC has been provisioned."
+}
+
+variable "region" {
+  type        = string
+  description = "The IBM Cloud region where the cluster will be/has been installed."
+}
+
 variable "ibmcloud_api_key" {
   type        = string
-  description = "The api key for IBM Cloud access"
+  description = "The IBM Cloud api token"
 }
 
-variable "resource_group_name" {
+variable "vpc_name" {
   type        = string
-  description = "Resource group where the cluster has been provisioned."
-    
-}
-
-variable "resource_location" {
-  type        = string
-  description = "Geographic location of the resource (e.g. us-south, us-east)"
-  default = "dal10"
-}
-
-variable "tags" {
-  type        = list(string)
-  description = "Tags that should be applied to the service"
-  default     = []
-}
-
-variable "name_prefix" {
-  type        = string
-  description = "The prefix name for the service. If not provided it will default to the resource group name"
-  default     = ""
-}
-
-variable "name" {
-  type        = string
-  description = "The name that should be used for the service, particularly when connecting to an existing service. If not provided then the name will be defaulted to {name prefix}-{service}"
-  default     = ""
-}
-
-variable "plan" {
-  type        = string
-  description = "The type of plan the service instance should run under (free, entry, small, medium)"
-  default     = "entry"
-}
-
-variable "sshPublicKey" {
-  type        = string
-  description = "sshPublicKey that should be applied to the service"  
+  description = "The name of the vpc instance"
 }
 
 variable "label" {
   type        = string
-  description = "The label used to build the resource name along with the name_prefix"
-  default     = "hpvs"
+  description = "The label for the server instance"
+  default     = "server"
 }
 
+variable "image_name" {
+  type        = string
+  description = "The name of the image to use for the virtual server"
+  default     = "ibm-ubuntu-18-04-1-minimal-amd64-2"
+}
 
+variable "vpc_subnet_count" {
+  type        = number
+  description = "Number of vpc subnets"
+}
+
+variable "vpc_subnets" {
+  type        = list(object({
+    label = string
+    id    = string
+    zone  = string
+  }))
+  description = "List of subnets with labels"
+}
+
+variable "profile_name" {
+  type        = string
+  description = "Instance profile to use for the bastion instance"
+  default     = "cx2-2x4"
+}
+
+variable "ssh_key_ids" {
+  type        = list(string)
+  description = "List of SSH key IDs to inject into the virtual server instance"
+  default     = []
+}
+
+variable "allow_ssh_from" {
+  type        = string
+  description = "An IP address, a CIDR block, or a single security group identifier to allow incoming SSH connection to the virtual server"
+  default     = ""
+}
+
+variable "create_public_ip" {
+  type        = bool
+  description = "Set whether to allocate a public IP address for the virtual server instance"
+  default     = false
+}
+
+variable "init_script" {
+  type        = string
+  default     = ""
+  description = "Script to run during the instance initialization. Defaults to an Ubuntu specific script when set to empty"
+}
+
+variable "tags" {
+  type        = list(string)
+  default     = []
+  description = "Tags that should be added to the instance"
+}
