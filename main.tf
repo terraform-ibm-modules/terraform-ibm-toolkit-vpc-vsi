@@ -70,7 +70,7 @@ resource ibm_is_floating_ip vsi {
   count = var.create_public_ip ? var.vpc_subnet_count : 0
 
   name           = "${local.name}${format("%02s", count.index)}-ip"
-  target         = ibm_is_instance.vsi.primary_network_interface[count.index].id
+  target         = ibm_is_instance.vsi[count.index].primary_network_interface[0].id
   resource_group = var.resource_group_id
 
   tags = var.tags
