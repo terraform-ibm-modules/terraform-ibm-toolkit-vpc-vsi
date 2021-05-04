@@ -48,7 +48,16 @@ data ibm_kms_key root_key {
   key_name    = var.kms_key_name
 }
 
+resource null_resource print_key_crn {
+  count = var.kms_enabled ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "echo 'Key crn: ${data.ibm_kms_key.root_key[0].keys[0].crn}'"
+  }
+}
+
 resource ibm_is_instance vsi {
+  depends_on = [null_resource.print_key_crn]
   count = var.vpc_subnet_count
 
   name           = "${local.name}${format("%02s", count.index)}"
