@@ -11,5 +11,5 @@ module "vsi" {
   flow_log_cos_bucket_name = module.dev_cos_bucket.bucket_name
   kms_key_name      = var.kms_key_name
   kms_enabled       = var.kms_enabled
-  kms_id            = module.hpcs.id
+  kms_id            = module.hpcs.crn
 }
