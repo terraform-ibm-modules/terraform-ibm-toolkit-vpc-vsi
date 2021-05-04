@@ -41,18 +41,11 @@ resource ibm_is_security_group_rule ssh_inbound {
   }
 }
 
-data ibm_kms_key root_key {
-  count = var.kms_enabled ? 1 : 0
-
-  instance_id = var.kms_id
-  key_name    = var.kms_key_name
-}
-
 resource null_resource print_key_crn {
   count = var.kms_enabled ? 1 : 0
 
   provisioner "local-exec" {
-    command = "echo 'Key crn: ${data.ibm_kms_key.root_key[0].keys[0].crn}'"
+    command = "echo 'Key crn: ${var.kms_key_crn}'"
   }
 }
 
@@ -78,7 +71,7 @@ resource ibm_is_instance vsi {
 
   boot_volume {
     name       = "${local.name}${format("%02s", count.index)}-boot"
-//    encryption = var.kms_enabled ? data.ibm_kms_key.root_key[0].keys[0].crn : null
+    encryption = var.kms_enabled ? var.kms_key_crn : null
   }
 
   tags = var.tags

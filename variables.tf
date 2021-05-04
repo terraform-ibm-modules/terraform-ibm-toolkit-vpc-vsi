@@ -92,15 +92,9 @@ variable "kms_enabled" {
   default     = false
 }
 
-variable "kms_id" {
+variable "kms_key_crn" {
   type        = string
-  description = "The id of the kms instance. Required if kms_enabled is true"
-  default     = ""
-}
-
-variable "kms_key_name" {
-  type        = string
-  description = "The name of the root key in the kms instance. Required if kms_enabled is true"
+  description = "The crn of the root key in the kms instance. Required if kms_enabled is true"
   default     = ""
 }
 
