@@ -71,7 +71,7 @@ resource ibm_is_instance vsi {
 
   boot_volume {
     name       = "${local.name}${format("%02s", count.index)}-boot"
-    encryption = var.kms_enabled ? var.kms_key_crn : null
+//    encryption = var.kms_enabled ? var.kms_key_crn : null
   }
 
   tags = var.tags
