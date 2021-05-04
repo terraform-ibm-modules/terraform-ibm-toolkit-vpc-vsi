@@ -1,23 +1,6 @@
-# Starter kit for a Terraform module
+# VPC Virtual Server instance
 
-This is a Starter kit to help with the creation of Terraform modules. The basic structure of a Terraform module is fairly
-simple and consists of the following basic values:
-
-- README.md - provides a description of the module
-- main.tf - defiens the logic for the module
-- variables.tf (optional) - defines the input variables for the module
-- outputs.tf (optional) - defines the values that are output from the module
-
-Beyond those files, any other content can be added and organized however you see fit. For example, you can add a `scripts/` directory
-that contains shell scripts executed by a `local-exec` `null_resource` in the terraform module. The contents will depend on what your
-module does and how it does it.
-
-## Instructions for creating a new module
-
-1. Update the title and description in the README to match the module you are creating
-2. Fill out the remaining sections in the README template as appropriate
-3. Implement your logic in the in the main.tf, variables.tf, and outputs.tf
-4. Use releases/tags to manage release versions of your module
+Module to provision a Virtual Server Instance (VSI) within an existing Virtual Private Cloud instance. The VSI can optionally be configured with Flow Logs to satisfy requirements imposed by security contraints.
 
 ## Software dependencies
 
@@ -25,28 +8,27 @@ The module depends on the following software components:
 
 ### Command-line tools
 
-- terraform - v12
-- kubectl
+- terraform - v13
 
 ### Terraform providers
 
-- IBM Cloud provider >= 1.5.3
-- Helm provider >= 1.1.1 (provided by Terraform)
+- IBM Cloud provider >= 1.23.0
 
 ## Module dependencies
 
 ## Example usage
 
 ```hcl-terraform
-module "dev_hpvs" {
-  source = "github.com/ibm-garage-cloud/terraform-ibm-vpc-vsi.git"
+module "vsi" {
+  source = "github.com/cloud-native-toolkit/terraform-ibm-vpc-vsi.git"
 
-  name              = var.name
-  service           = "hpvs"
-  plan              = var.plan
-  resource_location   = var.region
-  ibmcloud_api_key         = var.ibmcloud_api_key  
-  sshPublicKey = var.sshPublicKey
+  resource_group_id = module.resource_group.id
+  region            = var.region
+  ibmcloud_api_key  = var.ibmcloud_api_key
+  vpc_name          = module.vpc.name
+  vpc_subnet_count  = module.subnets.count
+  vpc_subnets       = module.subnets.subnets
+  ssh_key_ids       = [module.vpcssh.id]
+  flow_log_cos_bucket_name = module.dev_cos_bucket.bucket_name
 }
 ```
-

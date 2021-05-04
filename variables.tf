@@ -79,3 +79,9 @@ variable "tags" {
   default     = []
   description = "Tags that should be added to the instance"
 }
+
+variable "flow_log_cos_bucket_name" {
+  type        = string
+  description = "Cloud Object Storage bucket id for flow logs (optional)"
+  default     = ""
+}
