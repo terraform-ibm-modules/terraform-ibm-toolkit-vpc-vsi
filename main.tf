@@ -41,6 +41,13 @@ resource ibm_is_security_group_rule ssh_inbound {
   }
 }
 
+data ibm_kms_key root_key {
+  count = var.kms_enabled ? 1 : 0
+
+  instance_id = var.kms_id
+  key_name    = var.kms_key_id
+}
+
 resource ibm_is_instance vsi {
   count = var.vpc_subnet_count
 
@@ -60,7 +67,8 @@ resource ibm_is_instance vsi {
   }
 
   boot_volume {
-    name = "${local.name}${format("%02s", count.index)}-boot"
+    name       = "${local.name}${format("%02s", count.index)}-boot"
+    encryption = var.kms_enabled ? data.ibm_kms_key.root_key[0].keys[0].crn : null
   }
 
   tags = var.tags

@@ -85,3 +85,21 @@ variable "flow_log_cos_bucket_name" {
   description = "Cloud Object Storage bucket id for flow logs (optional)"
   default     = ""
 }
+
+variable "kms_enabled" {
+  type        = bool
+  description = "Flag indicating that the volumes should be encrypted using a KMS."
+  default     = false
+}
+
+variable "kms_id" {
+  type        = string
+  description = "The id of the kms instance. Required if kms_enabled is true"
+  default     = ""
+}
+
+variable "kms_key_id" {
+  type        = string
+  description = "The id of the root key in the kms instance. Required if kms_enabled is true"
+  default     = ""
+}
