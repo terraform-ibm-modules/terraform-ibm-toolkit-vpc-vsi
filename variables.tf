@@ -103,3 +103,9 @@ variable "kms_key_name" {
   description = "The name of the root key in the kms instance. Required if kms_enabled is true"
   default     = ""
 }
+
+variable "auto_delete_volume" {
+  type        = bool
+  description = "Flag indicating that any attached volumes should be deleted when the instance is deleted"
+  default     = true
+}

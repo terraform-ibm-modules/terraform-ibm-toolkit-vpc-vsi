@@ -67,6 +67,7 @@ resource ibm_is_instance vsi {
   image          = data.ibm_is_image.image.id
   keys           = var.ssh_key_ids
   resource_group = var.resource_group_id
+  auto_delete_volume = var.auto_delete_volume
 
   user_data = var.init_script != "" ? var.init_script : file("${path.module}/scripts/init-script-ubuntu.sh")
 
@@ -75,10 +76,10 @@ resource ibm_is_instance vsi {
     security_groups = [ibm_is_security_group.vsi.id]
   }
 
-  boot_volume {
+  boot_volume = [{
     name       = "${local.name}${format("%02s", count.index)}-boot"
     encryption = var.kms_enabled ? data.ibm_kms_key.root_key[0].keys[0].crn : null
-  }
+  }]
 
   tags = var.tags
 }
