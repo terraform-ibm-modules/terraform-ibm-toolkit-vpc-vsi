@@ -1,13 +1,132 @@
 id: github.com/cloud-native-toolkit/terraform-ibm-vpc-vsi
-name: ibm-mongodb
+name: ibm-vpc-vsi
 type: terraform
-description: Module to provision Hyper Protect vertual server instance
+description: Module to provision virtual server instance
 tags:
   - tools
   - infrastructure
-  - hpvs
-  - saas
+  - virtual server
 versions:
+  - platforms: []
+    dependencies:
+      - id: resource_group
+        refs:
+          - source: github.com/cloud-native-toolkit/terraform-ibm-resource-group
+            version: ">= 2.1.0"
+      - id: vpc
+        refs:
+          - source: github.com/cloud-native-toolkit/terraform-ibm-vpc
+            version: ">= 1.0.0"
+      - id: subnets
+        refs:
+          - source: github.com/cloud-native-toolkit/terraform-ibm-vpc-subnets
+            version: ">= 1.0.0"
+      - id: vpcssh
+        refs:
+          - source: github.com/cloud-native-toolkit/terraform-ibm-vpc-ssh
+            version: ">= 1.0.0"
+    variables:
+      - name: resource_group_id
+        moduleRef:
+          id: resource_group
+          output: id
+        type: string
+        description: The id of the IBM Cloud resource group where the VPC has been provisioned.
+      - name: vpc_name
+        moduleRef:
+          id: vpc
+          output: name
+        type: string
+        description: The name of the vpc instance
+      - name: vpc_subnets
+        moduleRef:
+          id: subnets
+          output: subnets
+        type: |-
+          list(object({
+              label = string
+              id    = string
+              zone  = string
+            }))
+        description: List of subnets with labels
+      - name: vpc_subnet_count
+        moduleRef:
+          id: subnets
+          output: count
+        type: number
+        description: Number of vpc subnets
+      - name: ssh_key_id
+        moduleRef:
+          id: vpcssh
+          output: id
+      - name: ibmcloud_api_key
+        scope: global
+        type: string
+        description: The IBM Cloud api token
+      - name: region
+        scope: global
+        type: string
+        description: The IBM Cloud region where the cluster will be/has been installed.
+      - name: label
+        type: string
+        description: The label for the server instance
+        default: server
+        optional: true
+      - name: image_name
+        type: string
+        description: The name of the image to use for the virtual server
+        default: ibm-ubuntu-18-04-1-minimal-amd64-2
+        optional: true
+      - name: profile_name
+        type: string
+        description: Instance profile to use for the bastion instance
+        default: cx2-2x4
+        optional: true
+      - name: ssh_key_ids
+        type: list(string)
+        description: List of SSH key IDs to inject into the virtual server instance
+        default: []
+        optional: true
+      - name: allow_ssh_from
+        type: string
+        description: An IP address, a CIDR block, or a single security group identifier to allow incoming SSH connection to the virtual server
+        default: ""
+        optional: true
+      - name: create_public_ip
+        type: bool
+        description: Set whether to allocate a public IP address for the virtual server instance
+        default: false
+        optional: true
+      - name: init_script
+        type: string
+        description: Script to run during the instance initialization. Defaults to an Ubuntu specific script when set to empty
+        default: ""
+        optional: true
+      - name: tags
+        type: list(string)
+        description: Tags that should be added to the instance
+        default: []
+        optional: true
+    version: v1.0.0
+    outputs:
+      - name: ids
+        description: The instance id
+      - name: names
+        description: The instance name
+      - name: crns
+        description: The crn of the instance
+      - name: public_ips
+        description: The public ips of the instances
+      - name: private_ips
+        description: The private ips of the instances
+      - name: location
+        description: The instance location
+      - name: service
+        description: The name of the service for the instance
+      - name: type
+        description: The type of the service for the instance
+      - name: label
+        description: The label used for the instance
   - platforms:
       - kubernetes
       - ocp3
