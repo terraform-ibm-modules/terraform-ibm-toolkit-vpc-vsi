@@ -76,10 +76,10 @@ resource ibm_is_instance vsi {
     security_groups = [ibm_is_security_group.vsi.id]
   }
 
-  boot_volume = [{
+  boot_volume = {
     name       = "${local.name}${format("%02s", count.index)}-boot"
     encryption = var.kms_enabled ? data.ibm_kms_key.root_key[0].keys[0].crn : null
-  }]
+  }
 
   tags = var.tags
 }
