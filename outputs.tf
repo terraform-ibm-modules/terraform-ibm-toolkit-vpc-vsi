@@ -46,3 +46,13 @@ output "label" {
   value       = var.label
   depends_on = [ibm_is_instance.vsi]
 }
+
+output "security_group_id" {
+  description = "The id of the security group that was created"
+  value       = ibm_is_security_group.vsi.id
+}
+
+output "security_group" {
+  description = "The security group that was created"
+  value       = ibm_is_security_group.vsi
+}
