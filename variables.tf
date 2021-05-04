@@ -50,10 +50,10 @@ variable "profile_name" {
   default     = "cx2-2x4"
 }
 
-variable "ssh_key_ids" {
-  type        = list(string)
-  description = "List of SSH key IDs to inject into the virtual server instance"
-  default     = []
+variable "ssh_key_id" {
+  type        = string
+  description = "SSH key ID to inject into the virtual server instance"
+  default     = ""
 }
 
 variable "allow_ssh_from" {

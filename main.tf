@@ -58,7 +58,7 @@ resource ibm_is_instance vsi {
   zone           = var.vpc_subnets[count.index].zone
   profile        = var.profile_name
   image          = data.ibm_is_image.image.id
-  keys           = var.ssh_key_ids
+  keys           = tolist(setsubtract([var.ssh_key_id], [""]))
   resource_group = var.resource_group_id
   auto_delete_volume = var.auto_delete_volume
 
