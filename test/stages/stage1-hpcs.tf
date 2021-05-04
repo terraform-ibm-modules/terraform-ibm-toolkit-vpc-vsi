@@ -1,5 +1,5 @@
 module "hpcs" {
-  source = "./module"
+  source = "github.com/cloud-native-toolkit/terraform-ibm-hpcs.git"
 
   resource_group_name      = module.resource_group.name
   region                   = var.region
