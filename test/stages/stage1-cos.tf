@@ -13,13 +13,6 @@ resource null_resource print_cos_id {
   }
 }
 
-resource "ibm_iam_authorization_policy" "policy" {
-  source_service_name = "is"
-  source_resource_type = "flow-log-collector"
-  target_service_name = "cloud-object-storage"
-  roles = ["Writer"]
-}
-
 module "dev_cos_bucket" {
   source = "github.com/cloud-native-toolkit/terraform-ibm-object-storage-bucket.git"
 
