@@ -2,9 +2,8 @@
 module "cos" {
   source = "github.com/ibm-garage-cloud/terraform-ibm-object-storage.git"
 
-  resource_group_name = var.resource_group_name
+  resource_group_name = module.resource_group.name
   name_prefix         = var.name_prefix
-  name                = "flow-log-cos-instance"
 }
 
 resource null_resource print_cos_id {
@@ -28,7 +27,7 @@ module "dev_cos_bucket" {
   cos_instance_id     = module.cos.id
   name_prefix         = var.name_prefix
   ibmcloud_api_key    = var.ibmcloud_api_key
-  name                = "fl-testing-gsi"
+  name                = "${var.name_prefix}-fl-testing-gsi"
   region              = var.region
 }
 
