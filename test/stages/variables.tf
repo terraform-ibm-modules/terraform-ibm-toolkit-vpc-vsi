@@ -36,3 +36,7 @@ variable "kms_id" {
 variable "kms_key_id" {
   type        = string
 }
+
+variable "kms_enabled" {
+  type        = bool
+}
