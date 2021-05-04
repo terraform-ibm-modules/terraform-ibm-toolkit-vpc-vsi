@@ -40,3 +40,11 @@ variable "kms_key_id" {
 variable "kms_enabled" {
   type        = bool
 }
+
+variable "hpcs_region" {
+  type        = string
+}
+
+variable "hpcs_resource_group_name" {
+  type        = string
+}
