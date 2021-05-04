@@ -45,7 +45,7 @@ data ibm_kms_key root_key {
   count = var.kms_enabled ? 1 : 0
 
   instance_id = var.kms_id
-  key_name    = var.kms_key_id
+  key_name    = var.kms_key_name
 }
 
 resource ibm_is_instance vsi {
