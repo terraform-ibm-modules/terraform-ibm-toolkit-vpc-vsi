@@ -19,7 +19,7 @@ output "public_ips" {
 }
 
 output "private_ips" {
-  value = ibm_is_instance.vsi.primary_network_interface[*].primary_ipv4_address
+  value = ibm_is_instance.vsi[*].primary_network_interface[0].primary_ipv4_address
   description = "The private ips of the instances"
 }
 
