@@ -50,10 +50,10 @@ variable "profile_name" {
   default     = "cx2-2x4"
 }
 
-variable "ssh_key_ids" {
-  type        = list(string)
-  description = "List of SSH key IDs to inject into the virtual server instance"
-  default     = []
+variable "ssh_key_id" {
+  type        = string
+  description = "SSH key ID to inject into the virtual server instance"
+  default     = ""
 }
 
 variable "allow_ssh_from" {
@@ -84,4 +84,22 @@ variable "flow_log_cos_bucket_name" {
   type        = string
   description = "Cloud Object Storage bucket id for flow logs (optional)"
   default     = ""
+}
+
+variable "kms_enabled" {
+  type        = bool
+  description = "Flag indicating that the volumes should be encrypted using a KMS."
+  default     = false
+}
+
+variable "kms_key_crn" {
+  type        = string
+  description = "The crn of the root key in the kms instance. Required if kms_enabled is true"
+  default     = ""
+}
+
+variable "auto_delete_volume" {
+  type        = bool
+  description = "Flag indicating that any attached volumes should be deleted when the instance is deleted"
+  default     = true
 }

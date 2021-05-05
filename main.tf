@@ -41,7 +41,16 @@ resource ibm_is_security_group_rule ssh_inbound {
   }
 }
 
+resource null_resource print_key_crn {
+  count = var.kms_enabled ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "echo 'Key crn: ${var.kms_key_crn}'"
+  }
+}
+
 resource ibm_is_instance vsi {
+  depends_on = [null_resource.print_key_crn]
   count = var.vpc_subnet_count
 
   name           = "${local.name}${format("%02s", count.index)}"
@@ -49,8 +58,9 @@ resource ibm_is_instance vsi {
   zone           = var.vpc_subnets[count.index].zone
   profile        = var.profile_name
   image          = data.ibm_is_image.image.id
-  keys           = var.ssh_key_ids
+  keys           = tolist(setsubtract([var.ssh_key_id], [""]))
   resource_group = var.resource_group_id
+  auto_delete_volume = var.auto_delete_volume
 
   user_data = var.init_script != "" ? var.init_script : file("${path.module}/scripts/init-script-ubuntu.sh")
 
@@ -60,7 +70,8 @@ resource ibm_is_instance vsi {
   }
 
   boot_volume {
-    name = "${local.name}${format("%02s", count.index)}-boot"
+    name       = "${local.name}${format("%02s", count.index)}-boot"
+//    encryption = var.kms_enabled ? var.kms_key_crn : null
   }
 
   tags = var.tags
