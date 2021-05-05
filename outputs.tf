@@ -56,3 +56,7 @@ output "security_group" {
   description = "The security group that was created"
   value       = ibm_is_security_group.vsi
 }
+
+output network_interface_ids {
+  value = ibm_is_instance.vsi[*].primary_network_interface[0].id
+}
