@@ -24,6 +24,11 @@ versions:
       refs:
         - source: github.com/cloud-native-toolkit/terraform-ibm-vpc-ssh
           version: ">= 1.0.0"
+    - id: cos_bucket
+      refs:
+        - source: github.com/cloud-native-toolkit/terraform-ibm-object-storage-bucket
+          version: ">= 0.0.1"
+      optional: true
   variables:
     - name: resource_group_id
       moduleRef:
@@ -49,3 +54,8 @@ versions:
       scope: global
     - name: region
       scope: global
+    - name: flow_log_cos_bucket_name
+      moduleRef:
+        id: cos_bucket
+        output: bucket_name
+      optional: true
