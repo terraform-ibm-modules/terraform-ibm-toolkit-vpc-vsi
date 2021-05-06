@@ -29,6 +29,11 @@ versions:
         - source: github.com/cloud-native-toolkit/terraform-ibm-object-storage-bucket
           version: ">= 0.0.1"
       optional: true
+    - id: kms_key
+      refs:
+        - source: github.com/cloud-native-toolkit/terraform-ibm-kms-key
+          version: ">= 0.0.1"
+      optional: true
   variables:
     - name: resource_group_id
       moduleRef:
@@ -58,4 +63,9 @@ versions:
       moduleRef:
         id: cos_bucket
         output: bucket_name
+      optional: true
+    - name: kms_key_crn
+      moduleRef:
+        id: kms_key
+        output: crn
       optional: true
