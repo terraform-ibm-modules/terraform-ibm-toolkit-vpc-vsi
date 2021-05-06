@@ -48,3 +48,7 @@ variable "hpcs_region" {
 variable "hpcs_resource_group_name" {
   type        = string
 }
+
+variable "bucket_name" {
+  type        = string
+}

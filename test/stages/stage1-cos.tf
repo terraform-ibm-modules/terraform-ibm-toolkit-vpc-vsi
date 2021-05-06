@@ -20,7 +20,7 @@ module "dev_cos_bucket" {
   cos_instance_id     = module.cos.id
   name_prefix         = var.name_prefix
   ibmcloud_api_key    = var.ibmcloud_api_key
-  name                = "${var.name_prefix}-fl-testing-gsi"
+  name                = var.bucket_name
   region              = var.region
 }
 
