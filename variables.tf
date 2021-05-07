@@ -27,7 +27,7 @@ variable "label" {
 variable "image_name" {
   type        = string
   description = "The name of the image to use for the virtual server"
-  default     = "ibm-ubuntu-18-04-1-minimal-amd64-2"
+  default     = "ibm-ubuntu-18-04-1-minimal-amd64-1"
 }
 
 variable "vpc_subnet_count" {
@@ -125,4 +125,10 @@ variable "security_group_rules" {
   # }))
   description = "List of security group rules to set on the bastion security group in addition to the SSH rules"
   default = []
+}
+
+variable "allow_deprecated_image" {
+  type        = bool
+  description = "Flag indicating that deprecated images should be allowed for use in the Virtual Server instance. If the value is `false` and the image is deprecated then the module will fail to provision"
+  default     = true
 }
