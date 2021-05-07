@@ -13,8 +13,14 @@ resource null_resource print_names {
   }
 }
 
-data "ibm_is_image" "image" {
+data ibm_is_image image {
   name = var.image_name
+}
+
+resource null_resource print_deprecated {
+  provisioner "local-exec" {
+    command = "${path.module}/scripts/check-image.sh '${data.ibm_is_image.image.status}' '${data.ibm_is_image.image.name}'"
+  }
 }
 
 data ibm_is_vpc vpc {
@@ -105,7 +111,7 @@ resource null_resource print_key_crn {
 }
 
 resource ibm_is_instance vsi {
-  depends_on = [null_resource.print_key_crn]
+  depends_on = [null_resource.print_key_crn, null_resource.print_deprecated]
   count = var.vpc_subnet_count
 
   name           = "${local.name}${format("%02s", count.index)}"
