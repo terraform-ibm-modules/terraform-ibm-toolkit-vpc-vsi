@@ -111,7 +111,7 @@ resource null_resource print_key_crn {
 }
 
 resource ibm_is_instance vsi {
-  depends_on = [null_resource.print_key_crn]
+  depends_on = [null_resource.print_key_crn, null_resource.print_deprecated]
   count = var.vpc_subnet_count
 
   name           = "${local.name}${format("%02s", count.index)}"
