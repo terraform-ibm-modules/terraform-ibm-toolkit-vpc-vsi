@@ -13,8 +13,14 @@ resource null_resource print_names {
   }
 }
 
-data "ibm_is_image" "image" {
+data ibm_is_image image {
   name = var.image_name
+}
+
+resource null_resource print_deprecated {
+  provisioner "local-exec" {
+    command = "${path.module}/scripts/check-image.sh '${data.ibm_is_image.image.status}' '${data.ibm_is_image.image.name}'"
+  }
 }
 
 data ibm_is_vpc vpc {
