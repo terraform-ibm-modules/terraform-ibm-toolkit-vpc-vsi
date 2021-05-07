@@ -19,7 +19,7 @@ data ibm_is_image image {
 
 resource null_resource print_deprecated {
   provisioner "local-exec" {
-    command = "${path.module}/scripts/check-image.sh '${data.ibm_is_image.image.status}' '${data.ibm_is_image.image.name}'"
+    command = "${path.module}/scripts/check-image.sh '${data.ibm_is_image.image.status}' '${data.ibm_is_image.image.name}' '${var.allow_deprecated_image}'"
   }
 }
 

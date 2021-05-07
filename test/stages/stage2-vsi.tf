@@ -11,4 +11,5 @@ module "vsi" {
   flow_log_cos_bucket_name = module.dev_cos_bucket.bucket_name
   kms_key_crn       = module.hpcs_key.crn
   kms_enabled       = var.kms_enabled
+  allow_deprecated_image = false
 }
