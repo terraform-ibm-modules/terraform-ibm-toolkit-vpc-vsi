@@ -5,7 +5,7 @@ module "subnets" {
   region            = var.region
   ibmcloud_api_key  = var.ibmcloud_api_key
   vpc_name          = module.vpc.name
-  acl_id            = module.vpc.acl_id
+  vpc_id            = module.vpc.id
   gateways          = []
   _count            = 2
   label             = "bastion"

@@ -60,3 +60,8 @@ output "security_group" {
 output network_interface_ids {
   value = ibm_is_instance.vsi[*].primary_network_interface[0].id
 }
+
+output count {
+  value       = var.vpc_subnet_count
+  description = "The number of vsi instances created. Should be the same as length(names)"
+}
