@@ -6,9 +6,6 @@ locals {
 
 resource null_resource print_names {
   provisioner "local-exec" {
-    command = "echo 'Resource group: ${var.resource_group_id}'"
-  }
-  provisioner "local-exec" {
     command = "echo 'VPC name: ${var.vpc_name}'"
   }
 }
