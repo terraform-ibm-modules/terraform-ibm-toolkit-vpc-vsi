@@ -45,15 +45,15 @@ resource ibm_is_security_group_rule ssh_inbound {
 }
 
 resource ibm_is_security_group_rule additional_rules {
-  for_each = var.security_group_rules
+  count = length(var.security_group_rules)
 
   group      = ibm_is_security_group.vsi.id
-  direction  = each.value["direction"]
-  remote     = lookup(each.value, "remote", null)
-  ip_version = lookup(each.value, "ip_version", null)
+  direction  = var.security_group_rules[count.index]["direction"]
+  remote     = lookup(var.security_group_rules[count.index], "remote", null)
+  ip_version = lookup(var.security_group_rules[count.index], "ip_version", null)
 
   dynamic "tcp" {
-    for_each = lookup(each.value, "tcp", null) != null ? [ lookup(each.value, "tcp", null) ] : []
+    for_each = lookup(var.security_group_rules[count.index], "tcp", null) != null ? [ lookup(var.security_group_rules[count.index], "tcp", null) ] : []
 
     content {
       port_min = tcp.value["port_min"]
@@ -62,7 +62,7 @@ resource ibm_is_security_group_rule additional_rules {
   }
 
   dynamic "udp" {
-    for_each = lookup(each.value, "udp", null) != null ? [ lookup(each.value, "udp", null) ] : []
+    for_each = lookup(var.security_group_rules[count.index], "udp", null) != null ? [ lookup(var.security_group_rules[count.index], "udp", null) ] : []
 
     content {
       port_min = udp.value["port_min"]
@@ -71,7 +71,7 @@ resource ibm_is_security_group_rule additional_rules {
   }
 
   dynamic "icmp" {
-    for_each = lookup(each.value, "icmp", null) != null ? [ lookup(each.value, "icmp", null) ] : []
+    for_each = lookup(var.security_group_rules[count.index], "icmp", null) != null ? [ lookup(var.security_group_rules[count.index], "icmp", null) ] : []
 
     content {
       type = icmp.value["type"]
