@@ -24,11 +24,6 @@ versions:
       refs:
         - source: github.com/cloud-native-toolkit/terraform-ibm-vpc-ssh
           version: ">= 1.0.0"
-    - id: cos_bucket
-      refs:
-        - source: github.com/cloud-native-toolkit/terraform-ibm-object-storage-bucket
-          version: ">= 0.0.1"
-      optional: true
     - id: kms_key
       refs:
         - source: github.com/cloud-native-toolkit/terraform-ibm-kms-key
@@ -59,11 +54,6 @@ versions:
       scope: global
     - name: region
       scope: global
-    - name: flow_log_cos_bucket_name
-      moduleRef:
-        id: cos_bucket
-        output: bucket_name
-      optional: true
     - name: kms_key_crn
       moduleRef:
         id: kms_key

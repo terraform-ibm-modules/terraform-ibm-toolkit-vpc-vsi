@@ -156,14 +156,3 @@ resource ibm_is_security_group_rule ssh_to_self_public_ip {
     port_max = 22
   }
 }
-
-resource ibm_is_flow_log flowlog_instance {
-  count = var.flow_log_cos_bucket_name != "" ? var.vpc_subnet_count : 0
-  depends_on = [ibm_is_floating_ip.vsi]
-
-  name = "${local.name}${format("%02s", count.index)}-flowlog"
-  active = true
-  target = ibm_is_instance.vsi[count.index].id
-  resource_group = var.resource_group_id
-  storage_bucket = var.flow_log_cos_bucket_name
-}
