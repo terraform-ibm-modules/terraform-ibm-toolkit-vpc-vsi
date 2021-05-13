@@ -127,8 +127,8 @@ variable "allow_deprecated_image" {
   default     = true
 }
 
-variable "base_resource_group" {
+variable "base_security_group" {
   type        = string
-  description = "The id of the base resource group to use for the VSI instance. If not provided the default VPC security group will be used."
+  description = "The id of the base security group to use for the VSI instance. If not provided the default VPC security group will be used."
   default     = null
 }

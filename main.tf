@@ -2,7 +2,7 @@
 locals {
   name                = "${replace(var.vpc_name, "/[^a-zA-Z0-9_\\-\\.]/", "")}-${var.label}"
   tags                = tolist(setunion(var.tags, [var.label]))
-  base_security_group = var.base_resource_group != null ? var.base_resource_group : data.ibm_is_vpc.vpc.default_security_group
+  base_security_group = var.base_security_group != null ? var.base_security_group : data.ibm_is_vpc.vpc.default_security_group
 }
 
 resource null_resource print_names {
