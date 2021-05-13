@@ -1,7 +1,8 @@
 
 locals {
-  name        = "${replace(var.vpc_name, "/[^a-zA-Z0-9_\\-\\.]/", "")}-${var.label}"
-  tags        = tolist(setunion(var.tags, [var.label]))
+  name                = "${replace(var.vpc_name, "/[^a-zA-Z0-9_\\-\\.]/", "")}-${var.label}"
+  tags                = tolist(setunion(var.tags, [var.label]))
+  base_security_group = var.base_resource_group != null ? var.base_resource_group : data.ibm_is_vpc.vpc.default_security_group
 }
 
 resource null_resource print_names {
@@ -105,7 +106,7 @@ resource ibm_is_instance vsi {
 
   primary_network_interface {
     subnet          = var.vpc_subnets[count.index].id
-    security_groups = [data.ibm_is_vpc.vpc.default_security_group, ibm_is_security_group.vsi.id]
+    security_groups = [local.base_security_group, ibm_is_security_group.vsi.id]
   }
 
   boot_volume {

@@ -11,4 +11,5 @@ module "vsi" {
   kms_key_crn       = module.hpcs_key.crn
   kms_enabled       = var.kms_enabled
   allow_deprecated_image = false
+  base_security_group = module.vpc.base_security_group
 }

@@ -126,3 +126,9 @@ variable "allow_deprecated_image" {
   description = "Flag indicating that deprecated images should be allowed for use in the Virtual Server instance. If the value is `false` and the image is deprecated then the module will fail to provision"
   default     = true
 }
+
+variable "base_resource_group" {
+  type        = string
+  description = "The id of the base resource group to use for the VSI instance. If not provided the default VPC security group will be used."
+  default     = null
+}
