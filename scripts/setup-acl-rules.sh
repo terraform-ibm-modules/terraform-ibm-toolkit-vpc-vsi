@@ -52,6 +52,7 @@ fi
 
 ## TODO more sophisticated logic needed to 1) test for existing rules and 2) place this rule in the right order
 
+echo "Processing ACL_RULES"
 echo "${ACL_RULES}" | ${JQ} -c '.[]' | \
   while read rule;
 do
@@ -113,6 +114,7 @@ do
   fi
 done
 
+echo "Processing SG_RULES"
 echo "${SG_RULES}" | ${JQ} -c '.[]' | \
   while read rule;
 do
@@ -133,8 +135,8 @@ do
   udp=$(echo "${rule}" | ${JQ} -c '.udp // empty')
   icmp=$(echo "${rule}" | ${JQ} -c '.icmp // empty')
 
-  echo "tcp: ${tcp}"
-  echo "udp: ${udp}"
+  RC=0
+
   if [[ -n "${tcp}" ]] || [[ -n "${udp}" ]]; then
     if [[ -n "${tcp}" ]]; then
       type="tcp"
@@ -153,6 +155,7 @@ do
       --source-port-max "${port_max}" \
       --destination-port-min "${port_min}" \
       --destination-port-max "${port_max}"
+      RC=$?
   elif [[ -n "${icmp}" ]]; then
     icmp_type=$(echo "${icmp}" | ${JQ} -r '.type // empty')
     icmp_code=$(echo "${icmp}" | ${JQ} -r '.code // empty')
@@ -162,21 +165,25 @@ do
         --name "${name}" \
         --icmp-type "${icmp_type}" \
         --icmp-code "${icmp_code}"
+      RC=$?
     elif [[ -n "${icmp_type}" ]]; then
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
         --name "${name}" \
         --icmp-type "${icmp_type}"
+      RC=$?
     else
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
         --name "${name}"
+      RC=$?
     fi
   else
     ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" all "${source}" "${destination}" \
       --name "${name}"
+    RC=$?
   fi
 
-  echo "Return code $?"
-  if [[ $? -ne 0 ]]; then
+  echo "Return code $RC"
+  if [[ $RC -ne 0 ]]; then
     rm "${SEMAPHORE}"
     exit 1
   fi
