@@ -37,6 +37,12 @@ while true; do
   sleep $SLEEP_TIME
 done
 
+function finish {
+  rm "${SEMAPHORE}"
+}
+
+trap finish EXIT
+
 if ! ibmcloud account show 1> /dev/null 2> /dev/null; then
   ibmcloud login --apikey "${IBMCLOUD_API_KEY}" -g "${RESOURCE_GROUP}" -r "${REGION}"
 fi
@@ -85,7 +91,8 @@ do
       --source-port-min "${source_port_min}" \
       --source-port-max "${source_port_max}" \
       --destination-port-min "${port_min}" \
-      --destination-port-max "${port_max}"
+      --destination-port-max "${port_max}" \
+      || exit 1
   elif [[ -n "${icmp}" ]]; then
     icmp_type=$(echo "${icmp}" | ${JQ} -r '.type // empty')
     icmp_code=$(echo "${icmp}" | ${JQ} -r '.code // empty')
@@ -94,23 +101,22 @@ do
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
         --name "${name}" \
         --icmp-type "${icmp_type}" \
-        --icmp-code "${icmp_code}"
+        --icmp-code "${icmp_code}" \
+        || exit 1
     elif [[ -n "${icmp_type}" ]]; then
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
         --name "${name}" \
-        --icmp-type "${icmp_type}"
+        --icmp-type "${icmp_type}" \
+        || exit 1
     else
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
-        --name "${name}"
+        --name "${name}" \
+        || exit 1
     fi
   else
     ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" all "${source}" "${destination}" \
-      --name "${name}"
-  fi
-
-  if [[ $? -ne 0 ]]; then
-    rm "${SEMAPHORE}"
-    exit 1
+      --name "${name}" \
+      || exit 1
   fi
 done
 
@@ -154,8 +160,8 @@ do
       --source-port-min "${port_min}" \
       --source-port-max "${port_max}" \
       --destination-port-min "${port_min}" \
-      --destination-port-max "${port_max}"
-      RC=$?
+      --destination-port-max "${port_max}" \
+      || exit 1
   elif [[ -n "${icmp}" ]]; then
     icmp_type=$(echo "${icmp}" | ${JQ} -r '.type // empty')
     icmp_code=$(echo "${icmp}" | ${JQ} -r '.code // empty')
@@ -164,29 +170,21 @@ do
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
         --name "${name}" \
         --icmp-type "${icmp_type}" \
-        --icmp-code "${icmp_code}"
-      RC=$?
+        --icmp-code "${icmp_code}" \
+        || exit 1
     elif [[ -n "${icmp_type}" ]]; then
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
         --name "${name}" \
-        --icmp-type "${icmp_type}"
-      RC=$?
+        --icmp-type "${icmp_type}" \
+        || exit 1
     else
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
-        --name "${name}"
-      RC=$?
+        --name "${name}" \
+        || exit 1
     fi
   else
     ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" all "${source}" "${destination}" \
-      --name "${name}"
-    RC=$?
-  fi
-
-  echo "Return code $RC"
-  if [[ $RC -ne 0 ]]; then
-    rm "${SEMAPHORE}"
-    exit 1
+      --name "${name}" \
+      || exit 1
   fi
 done
-
-rm "${SEMAPHORE}"
