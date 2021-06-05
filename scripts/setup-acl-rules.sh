@@ -41,7 +41,7 @@ function finish {
   rm "${SEMAPHORE}"
 }
 
-#trap finish EXIT
+trap finish EXIT
 
 if ! ibmcloud account show 1> /dev/null 2> /dev/null; then
   ibmcloud login --apikey "${IBMCLOUD_API_KEY}" -g "${RESOURCE_GROUP}" -r "${REGION}"
@@ -75,7 +75,7 @@ do
   if [[ -n "${tcp}" ]] || [[ -n "${udp}" ]]; then
     if [[ -n "${tcp}" ]]; then
       type="tcp"
-      config="${tdp}"
+      config="${tcp}"
     else
       type="udp"
       config="${udp}"
@@ -146,7 +146,7 @@ do
   if [[ -n "${tcp}" ]] || [[ -n "${udp}" ]]; then
     if [[ -n "${tcp}" ]]; then
       type="tcp"
-      config="${tdp}"
+      config="${tcp}"
     else
       type="udp"
       config="${udp}"
