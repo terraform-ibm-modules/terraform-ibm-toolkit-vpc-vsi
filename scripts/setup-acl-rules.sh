@@ -133,6 +133,8 @@ do
   udp=$(echo "${rule}" | ${JQ} -c '.udp // empty')
   icmp=$(echo "${rule}" | ${JQ} -c '.icmp // empty')
 
+  echo "tcp: ${tcp}"
+  echo "udp: ${udp}"
   if [[ -n "${tcp}" ]] || [[ -n "${udp}" ]]; then
     if [[ -n "${tcp}" ]]; then
       type="tcp"
@@ -173,6 +175,7 @@ do
       --name "${name}"
   fi
 
+  echo "Return code $?"
   if [[ $? -ne 0 ]]; then
     rm "${SEMAPHORE}"
     exit 1
