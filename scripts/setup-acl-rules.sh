@@ -22,15 +22,19 @@ fi
 SEMAPHORE="acl_rules.semaphore"
 
 while true; do
+  echo "Checking for semaphore"
   if [[ ! -f "${SEMAPHORE}" ]]; then
     echo -n "${NETWORK_ACL}" > "${SEMAPHORE}"
 
     if [[ $(cat ${SEMAPHORE}) == "${NETWORK_ACL}" ]]; then
+      echo "Got the semaphore. Creating acl rules"
       break
     fi
   fi
 
-  sleep $((1 + $RANDOM % 10))
+  SLEEP_TIME=$((1 + $RANDOM % 10))
+  echo "  Waiting $SLEEP_TIME seconds for semaphore"
+  sleep $SLEEP_TIME
 done
 
 if ! ibmcloud account show 1> /dev/null 2> /dev/null; then
@@ -174,3 +178,5 @@ do
     exit 1
   fi
 done
+
+rm "${SEMAPHORE}"
