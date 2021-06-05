@@ -132,3 +132,31 @@ variable "base_security_group" {
   description = "The id of the base security group to use for the VSI instance. If not provided the default VPC security group will be used."
   default     = null
 }
+
+variable "acl_rules" {
+  # type = list(object({
+  #   name=string,
+  #   action=string,
+  #   direction=string,
+  #   source=string,
+  #   destination=string,
+  #   tcp=optional(object({
+  #     port_min=number,
+  #     port_max=number,
+  #     source_port_min=number,
+  #     source_port_max=number
+  #   })),
+  #   udp=optional(object({
+  #     port_min=number,
+  #     port_max=number,
+  #     source_port_min=number,
+  #     source_port_max=number
+  #   })),
+  #   icmp=optional(object({
+  #     type=number,
+  #     code=optional(number)
+  #   })),
+  # }))
+  description = "List of rules to set on the subnet access control list"
+  default = []
+}

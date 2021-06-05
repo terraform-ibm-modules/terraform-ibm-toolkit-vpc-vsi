@@ -89,8 +89,28 @@ resource null_resource print_key_crn {
   }
 }
 
+data ibm_is_subnet subnet {
+  count = var.vpc_subnet_count > 0 ? 1 : 0
+
+  identifier = var.vpc_subnets[0].id
+}
+
+resource null_resource update_acl_rules {
+  count = var.vpc_subnet_count > 0 && (length(var.acl_rules) > 0 || length(var.security_group_rules) > 0) ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "${path.module}/scripts/setup-acl-rules.sh '${data.ibm_is_subnet.subnet[0].network_acl}' '${var.region}' '${var.resource_group_id}'"
+
+    environment = {
+      IBMCLOUD_API_KEY = var.ibmcloud_api_key
+      ACL_RULES        = jsonencode(var.acl_rules)
+      SG_RULES         = jsonencode(var.security_group_rules)
+    }
+  }
+}
+
 resource ibm_is_instance vsi {
-  depends_on = [null_resource.print_key_crn, null_resource.print_deprecated]
+  depends_on = [null_resource.print_key_crn, null_resource.print_deprecated, ibm_is_security_group_rule.additional_rules, null_resource.update_acl_rules]
   count = var.vpc_subnet_count
 
   name           = "${local.name}${format("%02s", count.index)}"
