@@ -22,16 +22,26 @@ fi
 SEMAPHORE="acl_rules.semaphore"
 
 while true; do
+  echo "Checking for semaphore"
   if [[ ! -f "${SEMAPHORE}" ]]; then
     echo -n "${NETWORK_ACL}" > "${SEMAPHORE}"
 
     if [[ $(cat ${SEMAPHORE}) == "${NETWORK_ACL}" ]]; then
+      echo "Got the semaphore. Creating acl rules"
       break
     fi
   fi
 
-  sleep $((1 + $RANDOM % 10))
+  SLEEP_TIME=$((1 + $RANDOM % 10))
+  echo "  Waiting $SLEEP_TIME seconds for semaphore"
+  sleep $SLEEP_TIME
 done
+
+function finish {
+  rm "${SEMAPHORE}"
+}
+
+trap finish EXIT
 
 if ! ibmcloud account show 1> /dev/null 2> /dev/null; then
   ibmcloud login --apikey "${IBMCLOUD_API_KEY}" -g "${RESOURCE_GROUP}" -r "${REGION}"
@@ -48,6 +58,7 @@ fi
 
 ## TODO more sophisticated logic needed to 1) test for existing rules and 2) place this rule in the right order
 
+echo "Processing ACL_RULES"
 echo "${ACL_RULES}" | ${JQ} -c '.[]' | \
   while read rule;
 do
@@ -64,7 +75,7 @@ do
   if [[ -n "${tcp}" ]] || [[ -n "${udp}" ]]; then
     if [[ -n "${tcp}" ]]; then
       type="tcp"
-      config="${tdp}"
+      config="${tcp}"
     else
       type="udp"
       config="${udp}"
@@ -80,7 +91,8 @@ do
       --source-port-min "${source_port_min}" \
       --source-port-max "${source_port_max}" \
       --destination-port-min "${port_min}" \
-      --destination-port-max "${port_max}"
+      --destination-port-max "${port_max}" \
+      || exit 1
   elif [[ -n "${icmp}" ]]; then
     icmp_type=$(echo "${icmp}" | ${JQ} -r '.type // empty')
     icmp_code=$(echo "${icmp}" | ${JQ} -r '.code // empty')
@@ -89,26 +101,26 @@ do
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
         --name "${name}" \
         --icmp-type "${icmp_type}" \
-        --icmp-code "${icmp_code}"
+        --icmp-code "${icmp_code}" \
+        || exit 1
     elif [[ -n "${icmp_type}" ]]; then
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
         --name "${name}" \
-        --icmp-type "${icmp_type}"
+        --icmp-type "${icmp_type}" \
+        || exit 1
     else
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
-        --name "${name}"
+        --name "${name}" \
+        || exit 1
     fi
   else
     ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" all "${source}" "${destination}" \
-      --name "${name}"
-  fi
-
-  if [[ $? -ne 0 ]]; then
-    rm "${SEMAPHORE}"
-    exit 1
+      --name "${name}" \
+      || exit 1
   fi
 done
 
+echo "Processing SG_RULES"
 echo "${SG_RULES}" | ${JQ} -c '.[]' | \
   while read rule;
 do
@@ -129,10 +141,12 @@ do
   udp=$(echo "${rule}" | ${JQ} -c '.udp // empty')
   icmp=$(echo "${rule}" | ${JQ} -c '.icmp // empty')
 
+  RC=0
+
   if [[ -n "${tcp}" ]] || [[ -n "${udp}" ]]; then
     if [[ -n "${tcp}" ]]; then
       type="tcp"
-      config="${tdp}"
+      config="${tcp}"
     else
       type="udp"
       config="${udp}"
@@ -146,7 +160,8 @@ do
       --source-port-min "${port_min}" \
       --source-port-max "${port_max}" \
       --destination-port-min "${port_min}" \
-      --destination-port-max "${port_max}"
+      --destination-port-max "${port_max}" \
+      || exit 1
   elif [[ -n "${icmp}" ]]; then
     icmp_type=$(echo "${icmp}" | ${JQ} -r '.type // empty')
     icmp_code=$(echo "${icmp}" | ${JQ} -r '.code // empty')
@@ -155,22 +170,21 @@ do
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
         --name "${name}" \
         --icmp-type "${icmp_type}" \
-        --icmp-code "${icmp_code}"
+        --icmp-code "${icmp_code}" \
+        || exit 1
     elif [[ -n "${icmp_type}" ]]; then
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
         --name "${name}" \
-        --icmp-type "${icmp_type}"
+        --icmp-type "${icmp_type}" \
+        || exit 1
     else
       ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" icmp "${source}" "${destination}" \
-        --name "${name}"
+        --name "${name}" \
+        || exit 1
     fi
   else
     ibmcloud is network-acl-rule-add "${NETWORK_ACL}" "${action}" "${direction}" all "${source}" "${destination}" \
-      --name "${name}"
-  fi
-
-  if [[ $? -ne 0 ]]; then
-    rm "${SEMAPHORE}"
-    exit 1
+      --name "${name}" \
+      || exit 1
   fi
 done
