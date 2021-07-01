@@ -156,6 +156,7 @@ do
 
   if [[ -z "${ID}" ]]; then
     echo "Error creating rule: ${rule}"
+    echo "${RESULT}"
     exit 1
   fi
 done
@@ -257,6 +258,7 @@ do
 
   if [[ -z "${ID}" ]]; then
     echo "Error creating rule: ${rule}"
+    echo "${RESULT}"
     exit 1
   fi
 done
