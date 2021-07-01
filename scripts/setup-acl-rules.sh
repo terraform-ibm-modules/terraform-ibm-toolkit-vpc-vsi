@@ -53,7 +53,7 @@ if [[ -z "${JQ}" ]]; then
 fi
 
 echo "Getting IBM Cloud API access_token"
-TOKEN=$(curl -X POST "https://iam.cloud.ibm.com/identity/token" -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=${IBMCLOUD_API_KEY}" | ${JQ} -r '.access_token // empty')
+TOKEN=$(curl -s -X POST "https://iam.cloud.ibm.com/identity/token" -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=${IBMCLOUD_API_KEY}" | ${JQ} -r '.access_token // empty')
 
 if [[ -z "${TOKEN}" ]]; then
   echo "Error retrieving auth token"
@@ -147,7 +147,7 @@ do
 
   echo "Creating rule: ${RULE}"
 
-  RESULT=$(curl -H "Authorization: Bearer ${TOKEN}" \
+  RESULT=$(curl -s -H "Authorization: Bearer ${TOKEN}" \
     -X POST \
     "https://${REGION}.iaas.cloud.ibm.com/v1/network_acls/${NETWORK_ACL}/rules?version=${VERSION}&generation=2" \
     -d "${RULE}")
@@ -248,7 +248,7 @@ do
 
   echo "Creating rule: ${RULE}"
 
-  RESULT=$(curl -H "Authorization: Bearer ${TOKEN}" \
+  RESULT=$(curl -s -H "Authorization: Bearer ${TOKEN}" \
     -X POST \
     "https://${REGION}.iaas.cloud.ibm.com/v1/network_acls/${NETWORK_ACL}/rules?version=${VERSION}&generation=2" \
     -d "${RULE}")
