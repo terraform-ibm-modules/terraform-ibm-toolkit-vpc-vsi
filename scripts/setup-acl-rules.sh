@@ -98,10 +98,10 @@ do
       --arg source "${source}" \
       --arg destination "${destination}" \
       --arg name "${name}" \
-      --arg source_port_min "${source_port_min}" \
-      --arg source_port_max "${source_port_max}" \
-      --arg port_min "${port_min}" \
-      --arg port_max "${port_max}" \
+      --argjson source_port_min "${source_port_min}" \
+      --argjson source_port_max "${source_port_max}" \
+      --argjson port_min "${port_min}" \
+      --argjson port_max "${port_max}" \
       '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, port_min: $port_min, port_max: $port_max, source_port_min: $source_port_min, source_port_max: $source_port_max}')
   elif [[ -n "${icmp}" ]]; then
     icmp_type=$(echo "${icmp}" | ${JQ} -r '.type // empty')
@@ -114,8 +114,8 @@ do
         --arg source "${source}" \
         --arg destination "${destination}" \
         --arg name "${name}" \
-        --arg code "${icmp_code}" \
-        --arg type "${icmp_type}" \
+        --argjson code "${icmp_code}" \
+        --argjson type "${icmp_type}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, code: $code, type: $type}')
     elif [[ -n "${icmp_type}" ]]; then
       RULE=$(${JQ} -c -n --arg action "${action}" \
@@ -124,7 +124,7 @@ do
         --arg source "${source}" \
         --arg destination "${destination}" \
         --arg name "${name}" \
-        --arg type "${icmp_type}" \
+        --argjson type "${icmp_type}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, type: $type}')
     else
       RULE=$(${JQ} -c -n --arg action "${action}" \
@@ -200,10 +200,10 @@ do
       --arg source "${source}" \
       --arg destination "${destination}" \
       --arg name "${name}" \
-      --arg source_port_min "${port_min}" \
-      --arg source_port_max "${port_max}" \
-      --arg port_min "${port_min}" \
-      --arg port_max "${port_max}" \
+      --argjson source_port_min "${port_min}" \
+      --argjson source_port_max "${port_max}" \
+      --argjson port_min "${port_min}" \
+      --argjson port_max "${port_max}" \
       '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, port_min: $port_min, port_max: $port_max, source_port_min: $source_port_min, source_port_max: $source_port_max}')
   elif [[ -n "${icmp}" ]]; then
     icmp_type=$(echo "${icmp}" | ${JQ} -r '.type // empty')
@@ -216,8 +216,8 @@ do
         --arg source "${source}" \
         --arg destination "${destination}" \
         --arg name "${name}" \
-        --arg code "${icmp_code}" \
-        --arg type "${icmp_type}" \
+        --argjson code "${icmp_code}" \
+        --argjson type "${icmp_type}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, code: $code, type: $type}')
     elif [[ -n "${icmp_type}" ]]; then
       RULE=$(${JQ} -c -n --arg action "${action}" \
@@ -226,7 +226,7 @@ do
         --arg source "${source}" \
         --arg destination "${destination}" \
         --arg name "${name}" \
-        --arg type "${icmp_type}" \
+        --argjson type "${icmp_type}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, type: $type}')
     else
       RULE=$(${JQ} -c -n --arg action "${action}" \
