@@ -100,9 +100,9 @@ do
       --arg name "${name}" \
       --arg source_port_min "${source_port_min}" \
       --arg source_port_max "${source_port_max}" \
-      --arg destination_port_min "${port_min}" \
-      --arg destination_port_max "${port_max}" \
-      '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, destination_port_min: $destination_port_min, destination_port_max: $destination_port_max, source_port_min: $source_port_min, source_port_max: $source_port_max}')
+      --arg port_min "${port_min}" \
+      --arg port_max "${port_max}" \
+      '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, port_min: $port_min, port_max: $port_max, source_port_min: $source_port_min, source_port_max: $source_port_max}')
   elif [[ -n "${icmp}" ]]; then
     icmp_type=$(echo "${icmp}" | ${JQ} -r '.type // empty')
     icmp_code=$(echo "${icmp}" | ${JQ} -r '.code // empty')
@@ -201,9 +201,9 @@ do
       --arg name "${name}" \
       --arg source_port_min "${port_min}" \
       --arg source_port_max "${port_max}" \
-      --arg destination_port_min "${port_min}" \
-      --arg destination_port_max "${port_max}" \
-      '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, destination_port_min: $destination_port_min, destination_port_max: $destination_port_max, source_port_min: $source_port_min, source_port_max: $source_port_max}')
+      --arg port_min "${port_min}" \
+      --arg port_max "${port_max}" \
+      '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, port_min: $port_min, port_max: $port_max, source_port_min: $source_port_min, source_port_max: $source_port_max}')
   elif [[ -n "${icmp}" ]]; then
     icmp_type=$(echo "${icmp}" | ${JQ} -r '.type // empty')
     icmp_code=$(echo "${icmp}" | ${JQ} -r '.code // empty')
