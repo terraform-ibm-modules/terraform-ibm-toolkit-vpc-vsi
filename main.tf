@@ -85,7 +85,7 @@ resource null_resource print_key_crn {
   count = var.kms_enabled ? 1 : 0
 
   provisioner "local-exec" {
-    command = "echo 'Key crn: ${var.kms_key_crn}'"
+    command = "echo 'Key crn: ${var.kms_key_crn == null ? "null" : var.kms_key_crn}'"
   }
 }
 
