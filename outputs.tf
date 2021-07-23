@@ -50,7 +50,7 @@ output vsi_detail {
       primary_network_interface_id = i.primary_network_interface[0].id 
       location                     = var.region
       label                        = var.label
-      public_ip                    = ibm_is_floating_ip.vsi[i.name].address
+      public_ip                    = var.enable_fip ? ibm_is_floating_ip.vsi[i.name].address : null
       security_group               = local.security_group_id
     }
   ]
