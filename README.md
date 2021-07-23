@@ -19,7 +19,7 @@ The module depends on the following software components:
 ## Example usage
 
 ```hcl-terraform
-module "vsi" {
+module vsi {
   source = "github.com/cloud-native-toolkit/terraform-ibm-vpc-vsi.git"
 
   resource_group_id = module.resource_group.id
