@@ -5,3 +5,6 @@
 *.tfstate*
 
 module
+
+terraform.tfvars
+.terraform.lock.hcl

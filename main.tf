@@ -1,25 +1,18 @@
+##############################################################################
+# Local Variables
+##############################################################################
 
 locals {
   name                = "${replace(var.vpc_name, "/[^a-zA-Z0-9_\\-\\.]/", "")}-${var.label}"
   tags                = tolist(setunion(var.tags, [var.label]))
-  base_security_group = var.base_security_group != null ? var.base_security_group : data.ibm_is_vpc.vpc.default_security_group
 }
 
-resource null_resource print_names {
-  provisioner "local-exec" {
-    command = "echo 'VPC name: ${var.vpc_name}'"
-  }
-}
+##############################################################################
 
-data ibm_is_image image {
-  name = var.image_name
-}
 
-resource null_resource print_deprecated {
-  provisioner "local-exec" {
-    command = "${path.module}/scripts/check-image.sh '${data.ibm_is_image.image.status}' '${data.ibm_is_image.image.name}' '${var.allow_deprecated_image}'"
-  }
-}
+##############################################################################
+# VPC Data
+##############################################################################
 
 data ibm_is_vpc vpc {
   depends_on = [null_resource.print_names]
@@ -27,79 +20,35 @@ data ibm_is_vpc vpc {
   name  = var.vpc_name
 }
 
-resource ibm_is_security_group vsi {
-  name           = "${local.name}-group"
-  vpc            = data.ibm_is_vpc.vpc.id
-  resource_group = var.resource_group_id
+data ibm_is_subnet vpc_subnets {
+  count = length(var.vpc_subnets)
+
+  identifier = var.vpc_subnets[count.index].id
 }
 
-resource ibm_is_security_group_rule ssh_inbound {
-  count = var.allow_ssh_from != "" ? 1 : 0
+##############################################################################
 
-  group     = ibm_is_security_group.vsi.id
-  direction = "inbound"
-  remote    = var.allow_ssh_from
-  tcp {
-    port_min = 22
-    port_max = 22
-  }
+
+##############################################################################
+# VSI Image
+##############################################################################
+
+data ibm_is_image image {
+  name = var.image_name
 }
 
-resource ibm_is_security_group_rule additional_rules {
-  count = length(var.security_group_rules)
+##############################################################################
 
-  group      = ibm_is_security_group.vsi.id
-  direction  = var.security_group_rules[count.index]["direction"]
-  remote     = lookup(var.security_group_rules[count.index], "remote", null)
-  ip_version = lookup(var.security_group_rules[count.index], "ip_version", null)
 
-  dynamic "tcp" {
-    for_each = lookup(var.security_group_rules[count.index], "tcp", null) != null ? [ lookup(var.security_group_rules[count.index], "tcp", null) ] : []
-
-    content {
-      port_min = tcp.value["port_min"]
-      port_max = tcp.value["port_max"]
-    }
-  }
-
-  dynamic "udp" {
-    for_each = lookup(var.security_group_rules[count.index], "udp", null) != null ? [ lookup(var.security_group_rules[count.index], "udp", null) ] : []
-
-    content {
-      port_min = udp.value["port_min"]
-      port_max = udp.value["port_max"]
-    }
-  }
-
-  dynamic "icmp" {
-    for_each = lookup(var.security_group_rules[count.index], "icmp", null) != null ? [ lookup(var.security_group_rules[count.index], "icmp", null) ] : []
-
-    content {
-      type = icmp.value["type"]
-      code = lookup(icmp.value, "code", null)
-    }
-  }
-}
-
-resource null_resource print_key_crn {
-  count = var.kms_enabled ? 1 : 0
-
-  provisioner "local-exec" {
-    command = "echo 'Key crn: ${var.kms_key_crn == null ? "null" : var.kms_key_crn}'"
-  }
-}
-
-data ibm_is_subnet subnet {
-  count = var.vpc_subnet_count > 0 ? 1 : 0
-
-  identifier = var.vpc_subnets[0].id
-}
+##############################################################################
+# Add Additional ACL Rules
+##############################################################################
 
 resource null_resource update_acl_rules {
-  count = var.vpc_subnet_count > 0 && (length(var.acl_rules) > 0 || length(var.security_group_rules) > 0) ? 1 : 0
+  count = length(var.acl_rules) > 0 || length(var.security_group_rules) > 0 ? length(var.vpc_subnets) : 0
 
-  provisioner "local-exec" {
-    command = "${path.module}/scripts/setup-acl-rules.sh '${data.ibm_is_subnet.subnet[0].network_acl}' '${var.region}' '${var.resource_group_id}'"
+  provisioner local-exec {
+    command = "${path.module}/scripts/setup-acl-rules.sh '${data.ibm_is_subnet.vpc_subnets[count.index].network_acl}' '${var.region}' '${var.resource_group_id}'"
 
     environment = {
       IBMCLOUD_API_KEY = var.ibmcloud_api_key
@@ -109,52 +58,104 @@ resource null_resource update_acl_rules {
   }
 }
 
-resource ibm_is_instance vsi {
-  depends_on = [null_resource.print_key_crn, null_resource.print_deprecated, ibm_is_security_group_rule.additional_rules, null_resource.update_acl_rules]
-  count = var.vpc_subnet_count
+##############################################################################
 
-  name           = "${local.name}${format("%02s", count.index)}"
-  vpc            = data.ibm_is_vpc.vpc.id
-  zone           = var.vpc_subnets[count.index].zone
-  profile        = var.profile_name
-  image          = data.ibm_is_image.image.id
-  keys           = tolist(setsubtract([var.ssh_key_id], [""]))
-  resource_group = var.resource_group_id
+
+##############################################################################
+# SSH key for creating VSI
+##############################################################################
+
+resource ibm_is_ssh_key ssh_key {
+  # Create if SSH key ID is not passed
+  count      = var.ssh_key_id == "" ? 1 : 0
+  name       = "${var.label}-ssh-key" 
+  public_key = var.ssh_public_key
+}
+
+##############################################################################
+
+
+##############################################################################
+# Create list of VSI to be created
+##############################################################################
+
+locals {
+  vsi_list = flatten([
+    for subnet in var.vpc_subnets: [
+      for count in range(0, var.vsi_per_subnet):
+      {
+        zone      = data.ibm_is_subnet.vpc_subnets[index(var.vpc_subnets, subnet)].zone
+        subnet_id = data.ibm_is_subnet.vpc_subnets[index(var.vpc_subnets, subnet)].id
+        name      = "${local.name}-${index(var.vpc_subnets, subnet) + count + 1}"
+      }
+    ]
+  ])
+
+  vsi_map = {
+    for i in local.vsi_list:
+    (i.name) => i
+  }
+  ssh_key_id = var.ssh_key_id == "" ? ibm_is_ssh_key.ssh_key[0].id : var.ssh_key_id
+}
+
+##############################################################################
+
+
+##############################################################################
+# Create VSI
+##############################################################################
+
+resource ibm_is_instance vsi {
+  depends_on = [
+    null_resource.print_key_crn, 
+    null_resource.print_deprecated, 
+    ibm_is_security_group_rule.additional_rules, 
+    null_resource.update_acl_rules
+  ]
+
+  for_each           = local.vsi_map
+  name               = each.key
+  vpc                = data.ibm_is_vpc.vpc.id
+  zone               = each.value.zone
+  profile            = var.profile_name
+  image              = data.ibm_is_image.image.id
+  keys               = [
+    local.ssh_key_id
+  ]
+  resource_group     = var.resource_group_id
   auto_delete_volume = var.auto_delete_volume
 
   user_data = var.init_script != "" ? var.init_script : file("${path.module}/scripts/init-script-ubuntu.sh")
 
   primary_network_interface {
-    subnet          = var.vpc_subnets[count.index].id
-    security_groups = [local.base_security_group, ibm_is_security_group.vsi.id]
+    subnet          = each.value.subnet_id
+    security_groups = [
+      local.security_group_id
+    ]
   }
 
   boot_volume {
-    name       = "${local.name}${format("%02s", count.index)}-boot"
+    name       = "${each.key}-boot"
     encryption = var.kms_enabled ? var.kms_key_crn : null
   }
 
   tags = var.tags
 }
 
+##############################################################################
+
+
+##############################################################################
+# Optionally Create Floating IP
+##############################################################################
+
 resource ibm_is_floating_ip vsi {
-  count = var.create_public_ip ? var.vpc_subnet_count : 0
+  for_each        = var.enable_fip ? ibm_is_instance.vsi : {}
 
-  name           = "${local.name}${format("%02s", count.index)}-ip"
-  target         = ibm_is_instance.vsi[count.index].primary_network_interface[0].id
+  name           = "${local.name}${each.key}-fip"
+  target         = each.value.primary_network_interface.0.id
   resource_group = var.resource_group_id
-
-  tags = var.tags
+  tags           = var.tags
 }
 
-resource ibm_is_security_group_rule ssh_to_self_public_ip {
-  count = var.create_public_ip ? var.vpc_subnet_count : 0
-
-  group     = ibm_is_security_group.vsi.id
-  direction = "outbound"
-  remote    = ibm_is_floating_ip.vsi[count.index].address
-  tcp {
-    port_min = 22
-    port_max = 22
-  }
-}
+##############################################################################
