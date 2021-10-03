@@ -12,7 +12,7 @@ locals {
       port_max = 22
     }
   }]
-  security_group_rules = var.allow_ssh_from != "" ? concat(local.ssh_security_group_rule, var.security_group_rules) : var.security_group_rules
+  security_group_rules = var.allow_ssh_from != "" ? concat(local.ssh_security_group_rule, var.security_group_rules) : concat(var.security_group_rules)
 }
 
 resource null_resource print_names {
