@@ -3,6 +3,18 @@ locals {
   name                = "${replace(var.vpc_name, "/[^a-zA-Z0-9_\\-\\.]/", "")}-${var.label}"
   tags                = tolist(setunion(var.tags, [var.label]))
   base_security_group = var.base_security_group != null ? var.base_security_group : data.ibm_is_vpc.vpc.default_security_group
+  ssh_security_group_rule = [{
+    name      = "ssh-inbound",
+    direction = "inbound"
+    remote    = var.allow_ssh_from
+    tcp = {
+      port_min = 22
+      port_max = 22
+    }
+  }]
+  security_group_rules = var.allow_ssh_from != ""
+    ? concat(local.ssh_security_group_rule, var.security_group_rules)
+    : var.security_group_rules
 }
 
 resource null_resource print_names {
@@ -33,28 +45,16 @@ resource ibm_is_security_group vsi {
   resource_group = var.resource_group_id
 }
 
-resource ibm_is_security_group_rule ssh_inbound {
-  count = var.allow_ssh_from != "" ? 1 : 0
-
-  group     = ibm_is_security_group.vsi.id
-  direction = "inbound"
-  remote    = var.allow_ssh_from
-  tcp {
-    port_min = 22
-    port_max = 22
-  }
-}
-
 resource ibm_is_security_group_rule additional_rules {
-  count = length(var.security_group_rules)
+  count = length(local.security_group_rules)
 
   group      = ibm_is_security_group.vsi.id
-  direction  = var.security_group_rules[count.index]["direction"]
-  remote     = lookup(var.security_group_rules[count.index], "remote", null)
-  ip_version = lookup(var.security_group_rules[count.index], "ip_version", null)
+  direction  = local.security_group_rules[count.index]["direction"]
+  remote     = lookup(local.security_group_rules[count.index], "remote", null)
+  ip_version = lookup(local.security_group_rules[count.index], "ip_version", null)
 
   dynamic "tcp" {
-    for_each = lookup(var.security_group_rules[count.index], "tcp", null) != null ? [ lookup(var.security_group_rules[count.index], "tcp", null) ] : []
+    for_each = lookup(local.security_group_rules[count.index], "tcp", null) != null ? [ lookup(local.security_group_rules[count.index], "tcp", null) ] : []
 
     content {
       port_min = tcp.value["port_min"]
@@ -63,7 +63,7 @@ resource ibm_is_security_group_rule additional_rules {
   }
 
   dynamic "udp" {
-    for_each = lookup(var.security_group_rules[count.index], "udp", null) != null ? [ lookup(var.security_group_rules[count.index], "udp", null) ] : []
+    for_each = lookup(local.security_group_rules[count.index], "udp", null) != null ? [ lookup(local.security_group_rules[count.index], "udp", null) ] : []
 
     content {
       port_min = udp.value["port_min"]
@@ -72,7 +72,7 @@ resource ibm_is_security_group_rule additional_rules {
   }
 
   dynamic "icmp" {
-    for_each = lookup(var.security_group_rules[count.index], "icmp", null) != null ? [ lookup(var.security_group_rules[count.index], "icmp", null) ] : []
+    for_each = lookup(local.security_group_rules[count.index], "icmp", null) != null ? [ lookup(local.security_group_rules[count.index], "icmp", null) ] : []
 
     content {
       type = icmp.value["type"]
@@ -96,7 +96,7 @@ data ibm_is_subnet subnet {
 }
 
 resource null_resource update_acl_rules {
-  count = var.vpc_subnet_count > 0 && (length(var.acl_rules) > 0 || length(var.security_group_rules) > 0) ? 1 : 0
+  count = var.vpc_subnet_count > 0 && (length(var.acl_rules) > 0 || length(local.security_group_rules) > 0) ? 1 : 0
 
   provisioner "local-exec" {
     command = "${path.module}/scripts/setup-acl-rules.sh '${data.ibm_is_subnet.subnet[0].network_acl}' '${var.region}' '${var.resource_group_id}' '${var.target_network_range}'"
@@ -104,7 +104,7 @@ resource null_resource update_acl_rules {
     environment = {
       IBMCLOUD_API_KEY = var.ibmcloud_api_key
       ACL_RULES        = jsonencode(var.acl_rules)
-      SG_RULES         = jsonencode(var.security_group_rules)
+      SG_RULES         = jsonencode(local.security_group_rules)
     }
   }
 }
