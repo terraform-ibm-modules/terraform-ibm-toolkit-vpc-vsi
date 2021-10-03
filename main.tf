@@ -3,7 +3,7 @@ locals {
   name                = "${replace(var.vpc_name, "/[^a-zA-Z0-9_\\-\\.]/", "")}-${var.label}"
   tags                = tolist(setunion(var.tags, [var.label]))
   base_security_group = var.base_security_group != null ? var.base_security_group : data.ibm_is_vpc.vpc.default_security_group
-  ssh_security_group_rule = [{
+  ssh_security_group_rule = var.allow_ssh_from != "" ? [{
     name      = "ssh-inbound"
     direction = "inbound"
     remote    = var.allow_ssh_from
@@ -11,8 +11,8 @@ locals {
       port_min = 22
       port_max = 22
     }
-  }]
-  security_group_rules = var.allow_ssh_from != "" ? concat(local.ssh_security_group_rule, var.security_group_rules) : concat(var.security_group_rules)
+  }] : []
+  security_group_rules = concat(local.ssh_security_group_rule, var.security_group_rules)
 }
 
 resource null_resource print_names {
