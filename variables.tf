@@ -160,3 +160,9 @@ variable "acl_rules" {
   description = "List of rules to set on the subnet access control list"
   default = []
 }
+
+variable "target_network_range" {
+  type        = string
+  description = "The ip address range that should be used for the network acl rules generated from the security groups"
+  default     = "0.0.0.0/0"
+}
