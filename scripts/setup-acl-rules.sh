@@ -3,6 +3,11 @@
 NETWORK_ACL="$1"
 REGION="$2"
 RESOURCE_GROUP="$3"
+TARGET_IP_RANGE="$4"
+
+if [[ -z "${TARGET_IP_RANGE}" ]]; then
+  TARGET_IP_RANGE="0.0.0.0/0"
+fi
 
 if [[ -z "${NETWORK_ACL}" ]] || [[ -z "${REGION}" ]] || [[ -z "${RESOURCE_GROUP}" ]]; then
   echo "Usage: open-acl-rules.sh NETWORK_ACL REGION RESOURCE_GROUP"
@@ -171,11 +176,18 @@ do
   remote=$(echo "${rule}" | ${JQ} -r '.remote')
 
   if [[ "${direction}" == "inbound" ]]; then
+    reverse_direction="outbound"
+  else
+    reverse_direction="inbound"
+  fi
+  reverse_name="$(echo "${name}" | sed -E "s/-${direction}//g" | sed -E "s/(.*)/\1-${reverse_direction}/g")"
+
+  if [[ "${direction}" == "inbound" ]]; then
     source="${remote}"
-    destination="0.0.0.0/0"
+    destination="${TARGET_IP_RANGE}"
   else
     destination="${remote}"
-    source="0.0.0.0/0"
+    source="${TARGET_IP_RANGE}"
   fi
 
   tcp=$(echo "${rule}" | ${JQ} -c '.tcp // empty')
@@ -205,6 +217,17 @@ do
       --argjson destination_port_min "${port_min}" \
       --argjson destination_port_max "${port_max}" \
       '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, destination_port_min: $destination_port_min, destination_port_max: $destination_port_max, source_port_min: $source_port_min, source_port_max: $source_port_max}')
+    REVERSE_RULE=$(${JQ} -c -n --arg action "${action}" \
+      --arg direction "${reverse_direction}" \
+      --arg protocol "${type}" \
+      --arg source "${destination}" \
+      --arg destination "${source}" \
+      --arg name "${reverse_name}" \
+      --argjson source_port_min "${port_min}" \
+      --argjson source_port_max "${port_max}" \
+      --argjson destination_port_min "${port_min}" \
+      --argjson destination_port_max "${port_max}" \
+      '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, destination_port_min: $destination_port_min, destination_port_max: $destination_port_max, source_port_min: $source_port_min, source_port_max: $source_port_max}')
   elif [[ -n "${icmp}" ]]; then
     icmp_type=$(echo "${icmp}" | ${JQ} -r '.type // empty')
     icmp_code=$(echo "${icmp}" | ${JQ} -r '.code // empty')
@@ -219,6 +242,15 @@ do
         --argjson code "${icmp_code}" \
         --argjson type "${icmp_type}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, code: $code, type: $type}')
+      REVERSE_RULE=$(${JQ} -c -n --arg action "${action}" \
+        --arg direction "${reverse_direction}" \
+        --arg protocol "icmp" \
+        --arg source "${destination}" \
+        --arg destination "${source}" \
+        --arg name "${reverse_name}" \
+        --argjson code "${icmp_code}" \
+        --argjson type "${icmp_type}" \
+        '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, code: $code, type: $type}')
     elif [[ -n "${icmp_type}" ]]; then
       RULE=$(${JQ} -c -n --arg action "${action}" \
         --arg direction "${direction}" \
@@ -226,6 +258,14 @@ do
         --arg source "${source}" \
         --arg destination "${destination}" \
         --arg name "${name}" \
+        --argjson type "${icmp_type}" \
+        '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, type: $type}')
+      REVERSE_RULE=$(${JQ} -c -n --arg action "${action}" \
+        --arg direction "${reverse_direction}" \
+        --arg protocol "icmp" \
+        --arg source "${destination}" \
+        --arg destination "${source}" \
+        --arg name "${reverse_name}" \
         --argjson type "${icmp_type}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, type: $type}')
     else
@@ -236,6 +276,13 @@ do
         --arg destination "${destination}" \
         --arg name "${name}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name}')
+      REVERSE_RULE=$(${JQ} -c -n --arg action "${action}" \
+        --arg direction "${reverse_direction}" \
+        --arg protocol "icmp" \
+        --arg source "${destination}" \
+        --arg destination "${source}" \
+        --arg name "${reverse_name}" \
+        '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name}')
     fi
   else
     RULE=$(${JQ} -c -n --arg action "${action}" \
@@ -245,6 +292,13 @@ do
       --arg destination "${destination}" \
       --arg name "${name}" \
       '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name}')
+    REVERSE_RULE=$(${JQ} -c -n --arg action "${action}" \
+      --arg direction "${reverse_direction}" \
+      --arg protocol "all" \
+      --arg source "${destination}" \
+      --arg destination "${source}" \
+      --arg name "${reverse_name}" \
+      '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name}')
   fi
 
   echo "Creating rule: ${RULE}"
@@ -253,6 +307,11 @@ do
     -X POST \
     "https://${REGION}.iaas.cloud.ibm.com/v1/network_acls/${NETWORK_ACL}/rules?version=${VERSION}&generation=2" \
     -d "${RULE}")
+
+  REVERSE_RESULT=$(curl -s -H "Authorization: Bearer ${TOKEN}" \
+    -X POST \
+    "https://${REGION}.iaas.cloud.ibm.com/v1/network_acls/${NETWORK_ACL}/rules?version=${VERSION}&generation=2" \
+    -d "${REVERSE_RULE}")
 
   ID=$(echo "${RESULT}" | ${JQ} -r '.id // empty')
 

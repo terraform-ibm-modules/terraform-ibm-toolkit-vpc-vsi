@@ -99,7 +99,7 @@ resource null_resource update_acl_rules {
   count = var.vpc_subnet_count > 0 && (length(var.acl_rules) > 0 || length(var.security_group_rules) > 0) ? 1 : 0
 
   provisioner "local-exec" {
-    command = "${path.module}/scripts/setup-acl-rules.sh '${data.ibm_is_subnet.subnet[0].network_acl}' '${var.region}' '${var.resource_group_id}'"
+    command = "${path.module}/scripts/setup-acl-rules.sh '${data.ibm_is_subnet.subnet[0].network_acl}' '${var.region}' '${var.resource_group_id}' '${var.target_network_range}'"
 
     environment = {
       IBMCLOUD_API_KEY = var.ibmcloud_api_key

@@ -27,7 +27,7 @@ variable "label" {
 variable "image_name" {
   type        = string
   description = "The name of the image to use for the virtual server"
-  default     = "ibm-ubuntu-18-04-1-minimal-amd64-2"
+  default     = "ibm-ubuntu-18-04-5-minimal-amd64-1"
 }
 
 variable "vpc_subnet_count" {
@@ -159,4 +159,10 @@ variable "acl_rules" {
   # }))
   description = "List of rules to set on the subnet access control list"
   default = []
+}
+
+variable "target_network_range" {
+  type        = string
+  description = "The ip address range that should be used for the network acl rules generated from the security groups"
+  default     = "0.0.0.0/0"
 }
