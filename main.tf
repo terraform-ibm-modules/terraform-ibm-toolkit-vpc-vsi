@@ -12,7 +12,36 @@ locals {
       port_max = 22
     }
   }] : []
-  security_group_rules = concat(local.ssh_security_group_rule, var.security_group_rules)
+  internal_network_rules = [{
+    name      = "services-outbound"
+    direction = "outbound"
+    remote    = "166.8.0.0/14"
+  }, {
+    name      = "adn-dns-outbound"
+    direction = "outbound"
+    remote    = "161.26.0.0/16"
+    udp = {
+      port_min = 53
+      port_max = 53
+    }
+  }, {
+    name      = "adn-http-outbound"
+    direction = "outbound"
+    remote    = "161.26.0.0/16"
+    tcp = {
+      port_min = 80
+      port_max = 80
+    }
+  }, {
+    name      = "adn-https-outbound"
+    direction = "outbound"
+    remote    = "161.26.0.0/16"
+    tcp = {
+      port_min = 443
+      port_max = 443
+    }
+  }]
+  security_group_rules = concat(local.ssh_security_group_rule, var.security_group_rules, local.internal_network_rules)
 }
 
 resource null_resource print_names {
