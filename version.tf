@@ -5,6 +5,7 @@ terraform {
       version = ">= 1.9.0"
     }
   }
+  experiments = [module_variable_optional_attrs]
   required_version = ">= 0.15"
 }
 
