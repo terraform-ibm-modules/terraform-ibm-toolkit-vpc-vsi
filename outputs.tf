@@ -23,12 +23,6 @@ output "private_ips" {
   description = "The private ips of the instances"
 }
 
-output "location" {
-  description = "The instance location"
-  value       = var.region
-  depends_on  = [ibm_is_instance.vsi]
-}
-
 output "service" {
   description = "The name of the service for the instance"
   value       = "is"

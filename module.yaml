@@ -7,6 +7,9 @@ tags:
     - virtual server
 versions:
 - platforms: []
+  providers:
+    - name: ibm
+      source: "ibm-cloud/ibm"
   dependencies:
     - id: resource_group
       refs:
@@ -54,10 +57,6 @@ versions:
       moduleRef:
         id: vpcssh
         output: id
-    - name: ibmcloud_api_key
-      scope: global
-    - name: region
-      scope: global
     - name: kms_key_crn
       moduleRef:
         id: kms_key

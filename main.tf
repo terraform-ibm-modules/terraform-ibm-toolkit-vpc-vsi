@@ -42,6 +42,53 @@ locals {
     }
   }]
   security_group_rules = concat(local.ssh_security_group_rule, var.security_group_rules, local.internal_network_rules)
+  forward_acl_rules_from_sg_rules = [for rule in var.security_group_rules: {
+    action = "allow"
+    name = "${rule.name}-sg"
+    direction = rule.direction
+    source = rule.direction == "inbound" ? rule.remote : var.target_network_range
+    destination = rule.direction == "outbound" ? rule.remote : var.target_network_range
+    tcp = lookup(rule, "tcp", null) != null ? {
+      port_min = rule.tcp.port_min
+      port_max = rule.tcp.port_max
+      source_port_min = rule.tcp.port_min
+      source_port_max = rule.tcp.port_max
+    } : null
+    udp = lookup(rule, "udp", null) != null ? {
+      port_min = rule.udp.port_min
+      port_max = rule.udp.port_max
+      source_port_min = rule.udp.port_min
+      source_port_max = rule.udp.port_max
+    } : null
+    icmp = lookup(rule, "icmp", null) != null ? {
+      type = rule.icmp.type
+      code = lookup(rule.icmp, "code", null)
+    } : null
+  }]
+  reverse_acl_rules_from_sg_rules = [for rule in var.security_group_rules: {
+    action = "allow"
+    name = length(regexall(rule.direction, rule.name)) > 0 ? replace(rule.name, rule.direction, rule.direction == "inbound" ? "outbound-sg" : "inbound-sg") : "${rule.name}-${rule.direction == "inbound" ? "outbound" : "inbound"}-sg"
+    direction = rule.direction == "inbound" ? "outbound" : "inbound"
+    source = rule.direction == "outbound" ? rule.remote : var.target_network_range
+    destination = rule.direction == "inbound" ? rule.remote : var.target_network_range
+    tcp = lookup(rule, "tcp", null) != null ? {
+      port_min = rule.tcp.port_min
+      port_max = rule.tcp.port_max
+      source_port_min = rule.tcp.port_min
+      source_port_max = rule.tcp.port_max
+    } : null
+    udp = lookup(rule, "udp", null) != null ? {
+      port_min = rule.udp.port_min
+      port_max = rule.udp.port_max
+      source_port_min = rule.udp.port_min
+      source_port_max = rule.udp.port_max
+    } : null
+    icmp = lookup(rule, "icmp", null) != null ? {
+      type = rule.icmp.type
+      code = lookup(rule.icmp, "code", null)
+    } : null
+  }]
+  acl_rules = reverse(concat(local.forward_acl_rules_from_sg_rules, local.reverse_acl_rules_from_sg_rules, var.acl_rules))
 }
 
 resource null_resource print_names {
@@ -122,22 +169,51 @@ data ibm_is_subnet subnet {
   identifier = var.vpc_subnets[0].id
 }
 
-resource null_resource update_acl_rules {
-  count = var.vpc_subnet_count > 0 && (length(var.acl_rules) > 0 || length(local.security_group_rules) > 0) ? 1 : 0
+resource ibm_is_network_acl_rule acl_rules {
+  count = length(local.acl_rules)
 
-  provisioner "local-exec" {
-    command = "${path.module}/scripts/setup-acl-rules.sh '${data.ibm_is_subnet.subnet[0].network_acl}' '${var.region}' '${var.resource_group_id}' '${var.target_network_range}'"
+  network_acl = data.ibm_is_subnet.subnet[0].network_acl
+  name        = local.acl_rules[count.index].name
+  action      = local.acl_rules[count.index].action
+  source      = local.acl_rules[count.index].source
+  destination = local.acl_rules[count.index].destination
+  direction   = local.acl_rules[count.index].direction
+  before      = count.index > 0 ? ibm_is_network_acl_rule.acl_rules[count.index - 1].rule_id : null
 
-    environment = {
-      IBMCLOUD_API_KEY = var.ibmcloud_api_key
-      ACL_RULES        = jsonencode(var.acl_rules)
-      SG_RULES         = jsonencode(local.security_group_rules)
+  dynamic "tcp" {
+    for_each = lookup(local.acl_rules[count.index], "tcp", null) != null ? [ lookup(local.acl_rules[count.index], "tcp", null) != null ] : []
+
+    content {
+      port_min = tcp.value["port_min"]
+      port_max = tcp.value["port_max"]
+      source_port_min = tcp.value["source_port_min"]
+      source_port_max = tcp.value["source_port_max"]
+    }
+  }
+
+  dynamic "udp" {
+    for_each = lookup(local.acl_rules[count.index], "udp", null) != null ? [ lookup(local.acl_rules[count.index], "udp", null) != null ] : []
+
+    content {
+      port_min = udp.value["port_min"]
+      port_max = udp.value["port_max"]
+      source_port_min = udp.value["source_port_min"]
+      source_port_max = udp.value["source_port_max"]
+    }
+  }
+
+  dynamic "icmp" {
+    for_each = lookup(local.acl_rules[count.index], "icmp", null) != null ? [ lookup(local.acl_rules[count.index], "icmp", null) ] : []
+
+    content {
+      type = icmp.value["type"]
+      code = lookup(icmp.value, "code", null)
     }
   }
 }
 
 resource ibm_is_instance vsi {
-  depends_on = [null_resource.print_key_crn, null_resource.print_deprecated, ibm_is_security_group_rule.additional_rules, null_resource.update_acl_rules]
+  depends_on = [null_resource.print_key_crn, null_resource.print_deprecated, ibm_is_security_group_rule.additional_rules, ibm_is_network_acl_rule.acl_rules]
   count = var.vpc_subnet_count
 
   name           = "${local.name}${format("%02s", count.index)}"

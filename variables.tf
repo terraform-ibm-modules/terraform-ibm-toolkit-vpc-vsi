@@ -3,16 +3,6 @@ variable "resource_group_id" {
   description = "The id of the IBM Cloud resource group where the VPC has been provisioned."
 }
 
-variable "region" {
-  type        = string
-  description = "The IBM Cloud region where the cluster will be/has been installed."
-}
-
-variable "ibmcloud_api_key" {
-  type        = string
-  description = "The IBM Cloud api token"
-}
-
 variable "vpc_name" {
   type        = string
   description = "The name of the vpc instance"
@@ -99,24 +89,24 @@ variable "auto_delete_volume" {
 }
 
 variable "security_group_rules" {
-  # type = list(object({
-  #   name=string,
-  #   direction=string,
-  #   remote=optional(string),
-  #   ip_version=optional(string),
-  #   tcp=optional(object({
-  #     port_min=number,
-  #     port_max=number
-  #   })),
-  #   udp=optional(object({
-  #     port_min=number,
-  #     port_max=number
-  #   })),
-  #   icmp=optional(object({
-  #     type=number,
-  #     code=optional(number)
-  #   })),
-  # }))
+   type = list(object({
+     name=string,
+     direction=string,
+     remote=optional(string),
+     ip_version=optional(string),
+     tcp=optional(object({
+       port_min=number,
+       port_max=number
+     })),
+     udp=optional(object({
+       port_min=number,
+       port_max=number
+     })),
+     icmp=optional(object({
+       type=number,
+       code=optional(number)
+     })),
+   }))
   description = "List of security group rules to set on the bastion security group in addition to the SSH rules"
   default = []
 }
@@ -134,29 +124,29 @@ variable "base_security_group" {
 }
 
 variable "acl_rules" {
-  # type = list(object({
-  #   name=string,
-  #   action=string,
-  #   direction=string,
-  #   source=string,
-  #   destination=string,
-  #   tcp=optional(object({
-  #     port_min=number,
-  #     port_max=number,
-  #     source_port_min=number,
-  #     source_port_max=number
-  #   })),
-  #   udp=optional(object({
-  #     port_min=number,
-  #     port_max=number,
-  #     source_port_min=number,
-  #     source_port_max=number
-  #   })),
-  #   icmp=optional(object({
-  #     type=number,
-  #     code=optional(number)
-  #   })),
-  # }))
+   type = list(object({
+     name=string,
+     action=string,
+     direction=string,
+     source=string,
+     destination=string,
+     tcp=optional(object({
+       port_min=number,
+       port_max=number,
+       source_port_min=number,
+       source_port_max=number
+     })),
+     udp=optional(object({
+       port_min=number,
+       port_max=number,
+       source_port_min=number,
+       source_port_max=number
+     })),
+     icmp=optional(object({
+       type=number,
+       code=optional(number)
+     })),
+   }))
   description = "List of rules to set on the subnet access control list"
   default = []
 }
