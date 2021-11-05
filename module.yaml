@@ -7,6 +7,9 @@ tags:
     - virtual server
 versions:
 - platforms: []
+  providers:
+    - name: ibm
+      source: "ibm-cloud/ibm"
   dependencies:
     - id: resource_group
       refs:
