@@ -70,6 +70,7 @@ resource ibm_is_security_group vsi {
   name           = "${local.name}-group"
   vpc            = data.ibm_is_vpc.vpc.id
   resource_group = var.resource_group_id
+  tags           = var.tags
 }
 
 resource ibm_is_security_group_rule additional_rules {
@@ -163,6 +164,21 @@ resource ibm_is_instance vsi {
 
   tags = var.tags
 }
+
+data "ibm_is_volume" "instance_bd" {
+  depends_on = [ ibm_is_instance.vsi ]
+
+  count = var.vpc_subnet_count
+  name  = "${local.name}${format("%02s", count.index)}-boot"
+}
+
+resource "ibm_resource_tag" "bd_tag" {
+  count      = var.vpc_subnet_count
+  
+  resource_id = data.ibm_is_volume.instance_bd[count.index].crn
+  tags        = var.tags
+}
+
 
 resource ibm_is_floating_ip vsi {
   count = var.create_public_ip ? var.vpc_subnet_count : 0
