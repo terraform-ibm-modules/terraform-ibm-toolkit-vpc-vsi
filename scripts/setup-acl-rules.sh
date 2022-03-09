@@ -5,6 +5,10 @@ REGION="$2"
 RESOURCE_GROUP="$3"
 TARGET_IP_RANGE="$4"
 
+if [[ -n "${BIN_DIR}" ]]; then
+  export PATH="${BIN_DIR}:${PATH}"
+fi
+
 if [[ -z "${TARGET_IP_RANGE}" ]]; then
   TARGET_IP_RANGE="0.0.0.0/0"
 fi
@@ -49,16 +53,9 @@ function finish {
 trap finish EXIT
 
 # Install jq if not available
-JQ=$(command -v jq || command -v ./bin/jq)
-
-if [[ -z "${JQ}" ]]; then
-  echo "jq missing. Installing"
-  mkdir -p ./bin && curl -Lo ./bin/jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
-  JQ="${PWD}/bin/jq"
-fi
 
 echo "Getting IBM Cloud API access_token"
-TOKEN=$(curl -s -X POST "https://iam.cloud.ibm.com/identity/token" -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=${IBMCLOUD_API_KEY}" | ${JQ} -r '.access_token // empty')
+TOKEN=$(curl -s -X POST "https://iam.cloud.ibm.com/identity/token" -H "Content-Type: application/x-www-form-urlencoded" -d "grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=${IBMCLOUD_API_KEY}" | jq -r '.access_token // empty')
 
 if [[ -z "${TOKEN}" ]]; then
   echo "Error retrieving auth token"
@@ -70,18 +67,18 @@ fi
 VERSION="2021-06-30"
 
 echo "Processing ACL_RULES"
-echo "${ACL_RULES}" | ${JQ} -c '.[]' | \
+echo "${ACL_RULES}" | jq -c '.[]' | \
   while read rule;
 do
-  name=$(echo "${rule}" | ${JQ} -r '.name')
-  action=$(echo "${rule}" | ${JQ} -r '.action')
-  direction=$(echo "${rule}" | ${JQ} -r '.direction')
-  source=$(echo "${rule}" | ${JQ} -r '.source')
-  destination=$(echo "${rule}" | ${JQ} -r '.destination')
+  name=$(echo "${rule}" | jq -r '.name')
+  action=$(echo "${rule}" | jq -r '.action')
+  direction=$(echo "${rule}" | jq -r '.direction')
+  source=$(echo "${rule}" | jq -r '.source')
+  destination=$(echo "${rule}" | jq -r '.destination')
 
-  tcp=$(echo "${rule}" | ${JQ} -c '.tcp // empty')
-  udp=$(echo "${rule}" | ${JQ} -c '.udp // empty')
-  icmp=$(echo "${rule}" | ${JQ} -c '.icmp // empty')
+  tcp=$(echo "${rule}" | jq -c '.tcp // empty')
+  udp=$(echo "${rule}" | jq -c '.udp // empty')
+  icmp=$(echo "${rule}" | jq -c '.icmp // empty')
 
   if [[ -n "${tcp}" ]] || [[ -n "${udp}" ]]; then
     if [[ -n "${tcp}" ]]; then
@@ -92,12 +89,12 @@ do
       config="${udp}"
     fi
 
-    source_port_min=$(echo "${config}" | ${JQ} -r '.source_port_min')
-    source_port_max=$(echo "${config}" | ${JQ} -r '.source_port_max')
-    port_min=$(echo "${config}" | ${JQ} -r '.port_min')
-    port_max=$(echo "${config}" | ${JQ} -r '.port_max')
+    source_port_min=$(echo "${config}" | jq -r '.source_port_min')
+    source_port_max=$(echo "${config}" | jq -r '.source_port_max')
+    port_min=$(echo "${config}" | jq -r '.port_min')
+    port_max=$(echo "${config}" | jq -r '.port_max')
 
-    RULE=$(${JQ} -c -n --arg action "${action}" \
+    RULE=$(jq -c -n --arg action "${action}" \
       --arg direction "${direction}" \
       --arg protocol "${type}" \
       --arg source "${source}" \
@@ -109,11 +106,11 @@ do
       --argjson destination_port_max "${port_max}" \
       '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, destination_port_min: $destination_port_min, destination_port_max: $destination_port_max, source_port_min: $source_port_min, source_port_max: $source_port_max}')
   elif [[ -n "${icmp}" ]]; then
-    icmp_type=$(echo "${icmp}" | ${JQ} -r '.type // empty')
-    icmp_code=$(echo "${icmp}" | ${JQ} -r '.code // empty')
+    icmp_type=$(echo "${icmp}" | jq -r '.type // empty')
+    icmp_code=$(echo "${icmp}" | jq -r '.code // empty')
 
     if [[ -n "${icmp_type}" ]] && [[ -n "${icmp_code}" ]]; then
-      RULE=$(${JQ} -c -n --arg action "${action}" \
+      RULE=$(jq -c -n --arg action "${action}" \
         --arg direction "${direction}" \
         --arg protocol "icmp" \
         --arg source "${source}" \
@@ -123,7 +120,7 @@ do
         --argjson type "${icmp_type}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, code: $code, type: $type}')
     elif [[ -n "${icmp_type}" ]]; then
-      RULE=$(${JQ} -c -n --arg action "${action}" \
+      RULE=$(jq -c -n --arg action "${action}" \
         --arg direction "${direction}" \
         --arg protocol "icmp" \
         --arg source "${source}" \
@@ -132,7 +129,7 @@ do
         --argjson type "${icmp_type}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, type: $type}')
     else
-      RULE=$(${JQ} -c -n --arg action "${action}" \
+      RULE=$(jq -c -n --arg action "${action}" \
         --arg direction "${direction}" \
         --arg protocol "icmp" \
         --arg source "${source}" \
@@ -141,7 +138,7 @@ do
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name}')
     fi
   else
-    RULE=$(${JQ} -c -n --arg action "${action}" \
+    RULE=$(jq -c -n --arg action "${action}" \
       --arg direction "${direction}" \
       --arg protocol "all" \
       --arg source "${source}" \
@@ -157,7 +154,7 @@ do
     "https://${REGION}.iaas.cloud.ibm.com/v1/network_acls/${NETWORK_ACL}/rules?version=${VERSION}&generation=2" \
     -d "${RULE}")
 
-  ID=$(echo "${RESULT}" | ${JQ} -r '.id // empty')
+  ID=$(echo "${RESULT}" | jq -r '.id // empty')
 
   if [[ -z "${ID}" ]]; then
     echo "Error creating rule: ${rule}"
@@ -167,13 +164,13 @@ do
 done
 
 echo "Processing SG_RULES"
-echo "${SG_RULES}" | ${JQ} -c '.[]' | \
+echo "${SG_RULES}" | jq -c '.[]' | \
   while read rule;
 do
-  name=$(echo "${rule}" | ${JQ} -r '.name')
+  name=$(echo "${rule}" | jq -r '.name')
   action="allow"
-  direction=$(echo "${rule}" | ${JQ} -r '.direction')
-  remote=$(echo "${rule}" | ${JQ} -r '.remote')
+  direction=$(echo "${rule}" | jq -r '.direction')
+  remote=$(echo "${rule}" | jq -r '.remote')
 
   if [[ "${direction}" == "inbound" ]]; then
     reverse_direction="outbound"
@@ -190,9 +187,9 @@ do
     source="${TARGET_IP_RANGE}"
   fi
 
-  tcp=$(echo "${rule}" | ${JQ} -c '.tcp // empty')
-  udp=$(echo "${rule}" | ${JQ} -c '.udp // empty')
-  icmp=$(echo "${rule}" | ${JQ} -c '.icmp // empty')
+  tcp=$(echo "${rule}" | jq -c '.tcp // empty')
+  udp=$(echo "${rule}" | jq -c '.udp // empty')
+  icmp=$(echo "${rule}" | jq -c '.icmp // empty')
 
   if [[ -n "${tcp}" ]] || [[ -n "${udp}" ]]; then
     if [[ -n "${tcp}" ]]; then
@@ -203,10 +200,10 @@ do
       config="${udp}"
     fi
 
-    port_min=$(echo "${config}" | ${JQ} -r '.port_min')
-    port_max=$(echo "${config}" | ${JQ} -r '.port_max')
+    port_min=$(echo "${config}" | jq -r '.port_min')
+    port_max=$(echo "${config}" | jq -r '.port_max')
 
-    RULE=$(${JQ} -c -n --arg action "${action}" \
+    RULE=$(jq -c -n --arg action "${action}" \
       --arg direction "${direction}" \
       --arg protocol "${type}" \
       --arg source "${source}" \
@@ -217,7 +214,7 @@ do
       --argjson destination_port_min "${port_min}" \
       --argjson destination_port_max "${port_max}" \
       '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, destination_port_min: $destination_port_min, destination_port_max: $destination_port_max, source_port_min: $source_port_min, source_port_max: $source_port_max}')
-    REVERSE_RULE=$(${JQ} -c -n --arg action "${action}" \
+    REVERSE_RULE=$(jq -c -n --arg action "${action}" \
       --arg direction "${reverse_direction}" \
       --arg protocol "${type}" \
       --arg source "${destination}" \
@@ -229,11 +226,11 @@ do
       --argjson destination_port_max "${port_max}" \
       '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, destination_port_min: $destination_port_min, destination_port_max: $destination_port_max, source_port_min: $source_port_min, source_port_max: $source_port_max}')
   elif [[ -n "${icmp}" ]]; then
-    icmp_type=$(echo "${icmp}" | ${JQ} -r '.type // empty')
-    icmp_code=$(echo "${icmp}" | ${JQ} -r '.code // empty')
+    icmp_type=$(echo "${icmp}" | jq -r '.type // empty')
+    icmp_code=$(echo "${icmp}" | jq -r '.code // empty')
 
     if [[ -n "${icmp_type}" ]] && [[ -n "${icmp_code}" ]]; then
-      RULE=$(${JQ} -c -n --arg action "${action}" \
+      RULE=$(jq -c -n --arg action "${action}" \
         --arg direction "${direction}" \
         --arg protocol "icmp" \
         --arg source "${source}" \
@@ -242,7 +239,7 @@ do
         --argjson code "${icmp_code}" \
         --argjson type "${icmp_type}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, code: $code, type: $type}')
-      REVERSE_RULE=$(${JQ} -c -n --arg action "${action}" \
+      REVERSE_RULE=$(jq -c -n --arg action "${action}" \
         --arg direction "${reverse_direction}" \
         --arg protocol "icmp" \
         --arg source "${destination}" \
@@ -252,7 +249,7 @@ do
         --argjson type "${icmp_type}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, code: $code, type: $type}')
     elif [[ -n "${icmp_type}" ]]; then
-      RULE=$(${JQ} -c -n --arg action "${action}" \
+      RULE=$(jq -c -n --arg action "${action}" \
         --arg direction "${direction}" \
         --arg protocol "icmp" \
         --arg source "${source}" \
@@ -260,7 +257,7 @@ do
         --arg name "${name}" \
         --argjson type "${icmp_type}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, type: $type}')
-      REVERSE_RULE=$(${JQ} -c -n --arg action "${action}" \
+      REVERSE_RULE=$(jq -c -n --arg action "${action}" \
         --arg direction "${reverse_direction}" \
         --arg protocol "icmp" \
         --arg source "${destination}" \
@@ -269,14 +266,14 @@ do
         --argjson type "${icmp_type}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name, type: $type}')
     else
-      RULE=$(${JQ} -c -n --arg action "${action}" \
+      RULE=$(jq -c -n --arg action "${action}" \
         --arg direction "${direction}" \
         --arg protocol "icmp" \
         --arg source "${source}" \
         --arg destination "${destination}" \
         --arg name "${name}" \
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name}')
-      REVERSE_RULE=$(${JQ} -c -n --arg action "${action}" \
+      REVERSE_RULE=$(jq -c -n --arg action "${action}" \
         --arg direction "${reverse_direction}" \
         --arg protocol "icmp" \
         --arg source "${destination}" \
@@ -285,14 +282,14 @@ do
         '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name}')
     fi
   else
-    RULE=$(${JQ} -c -n --arg action "${action}" \
+    RULE=$(jq -c -n --arg action "${action}" \
       --arg direction "${direction}" \
       --arg protocol "all" \
       --arg source "${source}" \
       --arg destination "${destination}" \
       --arg name "${name}" \
       '{action: $action, direction: $direction, protocol: $protocol, source: $source, destination: $destination, name: $name}')
-    REVERSE_RULE=$(${JQ} -c -n --arg action "${action}" \
+    REVERSE_RULE=$(jq -c -n --arg action "${action}" \
       --arg direction "${reverse_direction}" \
       --arg protocol "all" \
       --arg source "${destination}" \
@@ -313,7 +310,7 @@ do
     "https://${REGION}.iaas.cloud.ibm.com/v1/network_acls/${NETWORK_ACL}/rules?version=${VERSION}&generation=2" \
     -d "${REVERSE_RULE}")
 
-  ID=$(echo "${RESULT}" | ${JQ} -r '.id // empty')
+  ID=$(echo "${RESULT}" | jq -r '.id // empty')
 
   if [[ -z "${ID}" ]]; then
     echo "Error creating rule: ${rule}"

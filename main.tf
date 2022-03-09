@@ -54,6 +54,13 @@ data ibm_is_image image {
   name = var.image_name
 }
 
+module setup_clis {
+  source = "cloud-native-toolkit/clis/util"
+  version = "1.13.0"
+
+  clis = ["jq"]
+}
+
 resource null_resource print_deprecated {
   provisioner "local-exec" {
     command = "${path.module}/scripts/check-image.sh '${data.ibm_is_image.image.status}' '${data.ibm_is_image.image.name}' '${var.allow_deprecated_image}'"
@@ -70,6 +77,7 @@ resource ibm_is_security_group vsi {
   name           = "${local.name}-group"
   vpc            = data.ibm_is_vpc.vpc.id
   resource_group = var.resource_group_id
+  tags           = var.tags
 }
 
 resource ibm_is_security_group_rule additional_rules {
@@ -129,6 +137,7 @@ resource null_resource update_acl_rules {
     command = "${path.module}/scripts/setup-acl-rules.sh '${data.ibm_is_subnet.subnet[0].network_acl}' '${var.region}' '${var.resource_group_id}' '${var.target_network_range}'"
 
     environment = {
+      BIN_DIR          = module.setup_clis.bin_dir
       IBMCLOUD_API_KEY = var.ibmcloud_api_key
       ACL_RULES        = jsonencode(var.acl_rules)
       SG_RULES         = jsonencode(local.security_group_rules)
@@ -163,6 +172,21 @@ resource ibm_is_instance vsi {
 
   tags = var.tags
 }
+
+data "ibm_is_volume" "instance_bd" {
+  depends_on = [ ibm_is_instance.vsi ]
+
+  count = var.vpc_subnet_count
+  name  = "${local.name}${format("%02s", count.index)}-boot"
+}
+
+resource "ibm_resource_tag" "bd_tag" {
+  count      = var.vpc_subnet_count
+  
+  resource_id = data.ibm_is_volume.instance_bd[count.index].crn
+  tags        = var.tags
+}
+
 
 resource ibm_is_floating_ip vsi {
   count = var.create_public_ip ? var.vpc_subnet_count : 0
