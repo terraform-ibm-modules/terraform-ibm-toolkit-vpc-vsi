@@ -27,7 +27,7 @@ variable "label" {
 variable "image_name" {
   type        = string
   description = "The name of the image to use for the virtual server"
-  default     = "ibm-ubuntu-18-04-6-minimal-amd64-2"
+  default     = "ibm-ubuntu-18-04-6-minimal-amd64-3"
 }
 
 variable "vpc_subnet_count" {

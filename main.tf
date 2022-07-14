@@ -56,7 +56,6 @@ data ibm_is_image image {
 
 module setup_clis {
   source = "cloud-native-toolkit/clis/util"
-  version = "1.13.0"
 
   clis = ["jq"]
 }
