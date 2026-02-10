@@ -1,5 +1,7 @@
 # VPC Virtual Server instance
 
+:warning: This module is no longer maintained. Please use [terraform-ibm-landing-zone-vsi](https://github.com/terraform-ibm-modules/terraform-ibm-landing-zone-vsi) for configuring IBM Cloud Virtual Server Instances (VSI).
+
 Module to provision a Virtual Server Instance (VSI) within an existing Virtual Private Cloud instance. The VSI can optionally be configured with Flow Logs to satisfy requirements imposed by security contraints.
 
 ## Software dependencies
